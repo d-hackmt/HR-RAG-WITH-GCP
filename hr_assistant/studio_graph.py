@@ -1,23 +1,17 @@
-"""27 · studio_graph — entry point: LangGraph Studio (`langgraph dev`).
+"""19 · studio_graph — entry point: LangGraph Studio (`langgraph dev`).
 
-Exposes the reliability agent's compiled graph so `langgraph dev` can
-visualize and step through it (nodes, edges, state at each step, tool
-calls) in the browser-based Studio UI.
-
-Connects to the mixed HR + noise Qdrant collection at import time (run
-`python ingest.py` first) and builds the guarded agent.
+Exposes the agent's compiled graph so Studio can visualize and step
+through it (nodes, edges, state at each step, tool calls) in the browser.
+Connects to the clean HR Qdrant collection at import time — run
+`python ingest.py` first.
 """
 
 from hr_assistant.logging_config import configure_logging
-from hr_assistant.pipeline import build_reliability_assistant
+from hr_assistant.pipeline import build_hr_assistant
 
 configure_logging()
 
-# Studio drives the raw agent graph — the semantic cache and the
-# input/output safety guardrails live in pipeline.ask(), not the agent, so
-# they are not exercised here. That's intentional: Studio is for inspecting
-# the agent's own nodes/edges/state.
-agent, _cache = build_reliability_assistant()
+agent = build_hr_assistant()
 
 # langgraph.json points at this module-level name
 graph = agent

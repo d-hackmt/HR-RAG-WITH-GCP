@@ -1,10 +1,19 @@
-# HR Policy Assistant
+# HR Policy Assistant — Basic RAG
 
-A working RAG agent that answers HR-policy questions from real policy
-documents — retrieval, metadata filtering, hybrid search, and re-ranking
-for grounded answers. Hardened with guardrails, memory, and a semantic
-cache; deployed to Google Cloud Run behind Google OAuth, with every model
-call routed through a LiteLLM fallback (Gemini → Groq).
+> **This is the `basic-rag` branch — stage 1 of 3.**
+> A plain, working RAG agent: ingestion, hybrid search, re-ranking, an
+> agent with memory, a CLI and a Streamlit UI, LangGraph Studio. No
+> guardrails, no evaluation, no deployment — those come next.
+>
+> | Branch | Adds |
+> |---|---|
+> | **`basic-rag`** *(here)* | the RAG pipeline end to end |
+> | `security` | safety guardrails, scope filter, semantic cache, evaluation, red-team, LLM fallback |
+> | `deployment` | Docker, Cloud Run, Google OAuth |
+
+A RAG agent that answers HR-policy questions from real policy documents —
+retrieval, metadata plumbing, hybrid (dense + BM25) search, and Jina
+re-ranking for grounded, cited answers. The model is Vertex AI Gemini.
 
 ## Quick start
 
@@ -19,36 +28,43 @@ streamlit run app.py          # chat UI
 ```
 
 `.env` needs: `PROJECT_ID`, `LOCATION`, `GCS_BUCKET_NAME`, `JINA_API_KEY`,
-`QDRANT_URL`, `QDRANT_API_KEY`. `GROQ_API_KEY` enables the app's fallback
-model (Gemini → Groq) and is required by `evaluate.py`; `LANGSMITH_API_KEY`
-is also required by `evaluate.py`. Local dev without a Model Armor
-template: set `GUARDRAIL_PROVIDER=gemini_lite` (or `none`). Full
-provisioning: **[commands.md](commands.md)**.
+`QDRANT_URL`, `QDRANT_API_KEY`. `LANGSMITH_API_KEY` + `LANGSMITH_TRACING=true`
+are optional (request tracing).
+
+## The code, in reading order
+
+Every file is numbered in its docstring. `hr_assistant/`: **01** config ·
+**02** prompts · **03** logging · **04** document_loader · **05** processor ·
+**06** splitter · **07** embeddings · **08** vector_store · **09** ingestion ·
+**10** reranker · **11** tools · **12** llm · **13** agent · **14** pipeline ·
+**15** tracing. Entry scripts: **16** `ingest.py` · **17** `main.py` ·
+**18** `app.py` · **19** `studio_graph.py`.
 
 ## The scripts
 
 | Command | What it does |
 |---|---|
-| `python ingest.py` | Ingest the corpus: local `data/` → GCS raw → GCS processed → Qdrant. Idempotent — skips a collection that already exists (`--force` to rebuild). |
-| `python main.py` | CLI demo — the full secure pipeline (guardrails + scope filter + cache). Bootstraps ingestion on first run if needed. |
-| `streamlit run app.py` | The chat UI. Same secure pipeline and bootstrap behavior. |
-| `python demo_reliability.py` | The reliability walkthrough — same pipeline against the noisy corpus: guardrails, scope filter, memory, cache. |
-| `python evaluate.py` | Answer-quality eval (correctness + groundedness), uploaded to LangSmith. Separate from everything else. |
-| `python redteam_test.py` | 7-attack adversarial pass; output to `results/`. |
+| `python ingest.py` | Ingest the corpus: local `data/` → GCS raw → GCS processed (pdf/docx/pptx parsed once) → Qdrant. Builds **both** collections. `--force` to rebuild, `--hr-only` / `--noisy-only` to limit scope. |
+| `python main.py` | CLI demo — a few questions through the agent. Bootstraps ingestion on first run if needed. |
+| `streamlit run app.py` | The chat UI. One conversation thread per browser session. |
 | `python -m hr_assistant.tracing` | Check that LangSmith tracing is wired up. |
+| `langgraph dev` | Open LangGraph Studio on the agent graph. |
 
-Local Docker: `docker compose up` (app), `docker compose run --rm eval`.
+## How it works
+
+```
+question
+  -> agent (LangChain create_agent + InMemorySaver memory)
+       -> search_hr_policy tool
+            -> Qdrant hybrid retrieve (wide: RERANK_CANDIDATE_K)
+            -> Jina reranker (narrow: TOP_K_RESULTS)  ->  cited chunks
+  -> Gemini writes the answer from those chunks  ->  answer + citation
+```
+
+Ingestion is a **separate** step — `hr_assistant/ingestion.py` is the only
+writer to Qdrant. Everything else connects to what it built.
 
 ## Documentation
 
-Read `docs/` in order:
-
-**The project** — [01 Overview](docs/01-overview.md) · [02 Tech Stack](docs/02-tech-stack.md)
-
-**The RAG pipeline** — [03 Document Processing](docs/03-document-processing.md) · [04 Chunking & Embeddings](docs/04-chunking-and-embeddings.md) · [05 Retrieval & Vector Storage](docs/05-retrieval-and-vector-storage.md) · [06 Filtering & Hybrid Search](docs/06-filtering-and-hybrid-search.md) · [07 Re-ranking](docs/07-re-ranking.md) · [08 The Agent](docs/08-the-agent.md)
-
-**Reliability** — [09 Noisy Corpus, Memory & Cache](docs/09-reliability.md) · [10 Evaluation & Red-Teaming](docs/10-evaluation-and-redteam.md)
-
-**Deployment & governance** — [11 GCP, APIs & IAM](docs/11-gcp-apis-and-iam.md) · [12 Containerization & Cloud Run](docs/12-containerization-and-cloud-run.md) · [13 Access Control](docs/13-access-control.md) · [14 LLM Routing & Fallback](docs/14-llm-routing.md) · [15 Content Guardrails](docs/15-content-guardrails.md) · [16 Hosting Architecture](docs/16-hosting-architecture.md)
-
-**Reference** — [commands.md](commands.md) (every command, creation to teardown) · [summary.md](summary.md) (project snapshot + known limitations, for handoff)
+Read `docs/` in order — [01 Overview](docs/01-overview.md)–[08 The Agent](docs/08-the-agent.md)
+for this stage. [commands.md](commands.md) has every provisioning command.

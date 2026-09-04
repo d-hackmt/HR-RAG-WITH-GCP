@@ -1,4 +1,4 @@
-"""21 · ingest.py — entry point: run the data ingestion pipeline (09).
+"""16 · ingest.py — entry point: run the data ingestion pipeline (09).
 
     local data/ files  ->  GCS raw/  ->  GCS processed/  ->  Qdrant
 
