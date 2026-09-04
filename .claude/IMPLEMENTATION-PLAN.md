@@ -102,6 +102,51 @@ skill, `DOS-AND-DONTS.md`.
 
 `python -m compileall -q hr_assistant *.py`
 
+---
+
+## Round 3 — self-hosted LiteLLM proxy → LiteLLM SDK
+
+The `llm-gateway` was a second Cloud Run service running LiteLLM as a proxy;
+the app called it over HTTP with a per-request-minted Google ID token. With
+one app that service bought nothing the in-process SDK doesn't — and it was
+the source of the project's worst deploy bug (Cloud Run IAM intercepting the
+`Authorization: Bearer` header). Replaced with the **LiteLLM SDK** (`litellm`
++ `langchain-litellm`'s `ChatLiteLLMRouter`) inside `hr_assistant/llm.py`.
+
+Behaviour unchanged: Gemini primary, Groq fallback after `num_retries=2`.
+Fallback model is now `openai/gpt-oss-20b` on Groq (was `llama-3.3-70b`).
+
+- [x] `hr_assistant/llm.py` — rewritten: module-level `litellm.Router`
+  (primary `vertex_ai/<LLM_MODEL_NAME>`, fallback `groq/<FALLBACK_MODEL_NAME>`,
+  `fallbacks=[{primary: [fallback]}]`, `litellm.drop_params = True`), wrapped
+  by `ChatLiteLLMRouter`. Deleted: `_gateway_id_token`, the httpx auth hooks,
+  the shared httpx client pair, the `ChatOpenAI` gateway branch, all
+  `google.oauth2` / `httpx` imports.
+- [x] `hr_assistant/config.py` — removed `LLM_GATEWAY_URL`; added
+  `FALLBACK_MODEL_NAME` (default `openai/gpt-oss-20b`); updated the
+  `GROQ_API_KEY` / `LLM_MODEL_NAME` comments.
+- [x] `hr_assistant/guardrails.py` — one stale comment (gateway httpx pools).
+- [x] `requirements.txt` — added `litellm`, `langchain-litellm`; removed the
+  explicit `httpx` line.
+- [x] Deleted `gateway/` (`litellm-config.yaml`, `Dockerfile`).
+- [x] `.env.example`, `commands.md` (Phase 10 env vars, Phase 12 rewritten,
+  teardown, model-migration), `README.md`, `CLAUDE.md`, `DOS-AND-DONTS.md`,
+  the `hr-assistant-dev` skill.
+- [x] Docs: `14-llm-gateway.md` → `14-llm-routing.md`, rewritten ("LLM
+  Routing & Fallback"); `01` `02` `08` `11` `13` `16` trimmed of
+  gateway/second-service references; `README.md` link updated.
+- Unchanged (verified): `pipeline.py`, `agent.py`, `tools.py`,
+  `studio_graph.py`, `evaluation.py` (judge still `ChatOpenAI`→Groq),
+  `evaluate.py`, `Dockerfile`, `docker-compose.yml`, every entry script.
+
+### Round 3 open verification (needs a run — user triggers)
+- `ChatLiteLLMRouter` + LangChain v1 `create_agent` tool-calling on a real
+  `agent.invoke()`.
+- `get_llm().with_structured_output(_SafetyVerdict)` through the router
+  (the `gemini_lite` guardrail path).
+- Exact Groq id: `groq/openai/gpt-oss-20b` vs `groq/gpt-oss-20b` (LiteLLM
+  slash-parsing quirk) — adjust `FALLBACK_MODEL_NAME` if needed.
+
 ## Call-site map (keep in sync)
 
 | Caller | Builder | Ask fn |

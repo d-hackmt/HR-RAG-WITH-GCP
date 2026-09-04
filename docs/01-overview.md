@@ -32,7 +32,7 @@ page, log in with Google, and ask in plain English.
 ```mermaid
 flowchart LR
     A["1. Build the RAG pipeline<br/>(local)"] --> B["2. Add reliability<br/>(guardrails, memory, cache, red-team)"]
-    B --> C["3. Ship it<br/>(Docker + Cloud Run + OAuth + LLM gateway)"]
+    B --> C["3. Ship it<br/>(Docker + Cloud Run + OAuth)"]
     C --> D["4. Verify it stayed correct<br/>(LangSmith answer eval + re-run red-team)"]
 ```
 
@@ -43,8 +43,9 @@ flowchart LR
   semantic cache, short-term memory, an adversarial red-team pass.
   (Docs 09–10.)
 - **Stage 3** — made it a hosted product: containerized, deployed to
-  Google Cloud Run, gated behind company Google logins, with a governed
-  gateway in front of every LLM call. (Docs 11–16.)
+  Google Cloud Run, gated behind company Google logins, with every LLM
+  call routed through one function (Gemini primary, Groq fallback).
+  (Docs 11–16.)
 - **Stage 4** — re-ran the quality and safety checks against the deployed
   system. (Doc 10.)
 
@@ -53,7 +54,9 @@ flowchart LR
 | Service | What it is | Who can reach it |
 |---|---|---|
 | `hr-rag-assistant` | The chatbot (Streamlit) | Anyone can load the page; only approved employees who log in with Google can chat |
-| `llm-gateway` | A private relay all LLM calls pass through | Only `hr-rag-assistant`'s own Cloud identity |
+
+One Cloud Run service. Model routing and fallback (doc 14) run inside it,
+not as a separate service.
 
 > Known limitations are listed in [summary.md](../summary.md) — read them
 > before trusting the guardrail or eval numbers.

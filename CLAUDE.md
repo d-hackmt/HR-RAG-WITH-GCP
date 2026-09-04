@@ -1,9 +1,9 @@
 # HR Policy Assistant — project guide for Claude
 
 RAG agent answering company HR-policy questions from real policy documents,
-with citations. Deployed on Google Cloud Run behind Google OAuth with a
-governed LLM gateway. Full docs: `docs/01`–`docs/16`. Fast orientation:
-`summary.md`.
+with citations. Deployed on Google Cloud Run behind Google OAuth; every
+model call is routed in-process by a LiteLLM Router (Gemini primary, Groq
+fallback). Full docs: `docs/01`–`docs/16`. Fast orientation: `summary.md`.
 
 ## Before you touch the code
 
@@ -14,7 +14,8 @@ the guardrail model, house style). After a change, load
 
 ## Hard rules
 
-- **Not a git repo** — no undo. Read before you edit; never delete.
+- **Git repo, pushed to GitHub** (`origin/main`) — but still read before you
+  edit, and don't delete without reason.
 - **`.env` = live secrets.** Never edit / print / share it. Defaults go in
   `config.py`; new variables get documented in `.env.example`.
 - **Config only from `.env`** through `hr_assistant/config.py`.

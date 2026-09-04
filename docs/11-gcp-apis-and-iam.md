@@ -18,7 +18,7 @@ Nothing works until the matching API is switched on for the project.
 
 ```mermaid
 flowchart TD
-    RUN["run.googleapis.com"] --> A1["Hosts both Cloud Run services"]
+    RUN["run.googleapis.com"] --> A1["Hosts the Cloud Run service"]
     AI["aiplatform.googleapis.com"] --> A2["Calls Gemini"]
     GCS["storage.googleapis.com"] --> A3["Stores raw policy documents"]
     BUILD["cloudbuild.googleapis.com"] --> A4["Builds the Docker image on deploy"]
@@ -29,7 +29,7 @@ flowchart TD
 
 | API | Without it… |
 |---|---|
-| `run.googleapis.com` | Can't deploy or run either service |
+| `run.googleapis.com` | Can't deploy or run the service |
 | `aiplatform.googleapis.com` | No answers — the model is unreachable |
 | `storage.googleapis.com` | No documents to search |
 | `cloudbuild.googleapis.com` | `gcloud run deploy --source .` can't build the image |
@@ -39,7 +39,7 @@ flowchart TD
 
 ## Permissions granted (least privilege)
 
-Both Cloud Run services run as the **default compute service account**.
+The Cloud Run service runs as the **default compute service account**.
 Each permission was added only when something actually needed it.
 
 | Role | Lets the app… | Kept narrow because |
@@ -48,14 +48,16 @@ Each permission was added only when something actually needed it.
 | `roles/storage.objectViewer` | **Read** files from the bucket | Read-only — the app never writes or deletes documents |
 | `roles/modelarmor.user` | Call the Model Armor screening API | Can use a template, not edit one |
 | `roles/secretmanager.secretAccessor` *(on the one `streamlit-auth` secret only)* | Read the OAuth config at startup | Scoped to a single secret — can't read any other |
-| `roles/run.invoker` *(on the `llm-gateway` service only)* | Let the app call the gateway | This binding *is* the gateway's access control — see doc 14 |
+
+The Groq fallback model is reached with a plain `GROQ_API_KEY` env var, not
+an IAM role — Groq is outside GCP.
 
 ## Two kinds of "permission" in this project
 
 - **Human permissions** — which *people* can use the app (the employee
   allow-list, doc 13).
-- **Machine permissions** — which *service account* can call which *API*,
-  and which *service* can call which *other service* (the roles above).
+- **Machine permissions** — which *service account* can call which *API*
+  (the roles above).
 
 Both are enforced automatically, not written down and hoped for.
 

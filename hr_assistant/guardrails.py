@@ -81,8 +81,8 @@ _gemini_lite_llm = None
 
 def _gemini_lite_client():
     """One structured-output LLM for the whole process — check_input /
-    check_output run this on every request, so building a fresh client
-    (and, on the gateway path, fresh httpx pools) each call would leak."""
+    check_output run this on every request, so rebuilding it (and re-wrapping
+    the shared LiteLLM Router) on every call would be wasted work."""
     global _gemini_lite_llm
     if _gemini_lite_llm is None:
         from hr_assistant.llm import get_llm

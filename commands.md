@@ -22,7 +22,6 @@ QDRANT_COLLECTION_NAME=hr_policies
 QDRANT_NOISY_COLLECTION_NAME=hr_policies_noisy_demo
 COMPUTE_SA=564821241199-compute@developer.gserviceaccount.com
 CLOUD_RUN_SERVICE_APP=hr-rag-assistant
-CLOUD_RUN_SERVICE_GATEWAY=llm-gateway
 SECRET_NAME=streamlit-auth
 ```
 
@@ -208,12 +207,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:$COMPUTE_SA" --role="roles/modelarmor.user"
 
 # Build from the Dockerfile and deploy as a public web service
-# (public at the network level only — the real gate comes in Phase 11)
+# (public at the network level only — the real gate comes in Phase 11).
+# GROQ_API_KEY is the fallback model's credential — llm.py's LiteLLM router
+# uses Groq only if the Vertex Gemini call errors (see doc 14).
 gcloud run deploy $CLOUD_RUN_SERVICE_APP \
   --source . \
   --region $REGION \
   --allow-unauthenticated \
-  --set-env-vars PROJECT_ID=$PROJECT_ID,LOCATION=$LOCATION,REGION=$REGION,GCS_BUCKET_NAME=$GCS_BUCKET_NAME,QDRANT_URL=<your-qdrant-url>,QDRANT_API_KEY=<your-qdrant-key>,QDRANT_COLLECTION_NAME=$QDRANT_COLLECTION_NAME,JINA_API_KEY=<your-jina-key>,GUARDRAIL_PROVIDER=model_armor,MODEL_ARMOR_LOCATION=$MODEL_ARMOR_LOCATION,MODEL_ARMOR_TEMPLATE_ID=$MODEL_ARMOR_TEMPLATE_ID
+  --set-env-vars PROJECT_ID=$PROJECT_ID,LOCATION=$LOCATION,REGION=$REGION,GCS_BUCKET_NAME=$GCS_BUCKET_NAME,QDRANT_URL=<your-qdrant-url>,QDRANT_API_KEY=<your-qdrant-key>,QDRANT_COLLECTION_NAME=$QDRANT_COLLECTION_NAME,JINA_API_KEY=<your-jina-key>,GROQ_API_KEY=<your-groq-key>,GUARDRAIL_PROVIDER=model_armor,MODEL_ARMOR_LOCATION=$MODEL_ARMOR_LOCATION,MODEL_ARMOR_TEMPLATE_ID=$MODEL_ARMOR_TEMPLATE_ID
 ```
 
 **Bug hit here:** the first deploy crashed — `fastembed`'s BM25 model
@@ -282,45 +283,27 @@ gcloud run deploy $CLOUD_RUN_SERVICE_APP \
 
 ---
 
-## Phase 12 — LLM gateway (LiteLLM in front of Gemini)
+## Phase 12 — LLM routing & fallback
+
+Nothing to deploy. Model routing (Vertex Gemini primary, Groq fallback) runs
+**in-process** via the LiteLLM SDK in `hr_assistant/llm.py` — the fallback
+just needs `GROQ_API_KEY`, already set in the Phase 10 deploy. To change the
+fallback model, set `FALLBACK_MODEL_NAME` (default `openai/gpt-oss-20b`):
 
 ```bash
-# Deploy the gateway as its own PRIVATE service
-# (--memory=1Gi — the default 512MiB OOM-kills LiteLLM before it binds).
-# GROQ_API_KEY is the fallback model's key (Gemini is primary; see
-# gateway/litellm-config.yaml).
-cd gateway/
-gcloud run deploy $CLOUD_RUN_SERVICE_GATEWAY \
-  --source . --region $REGION \
-  --memory=1Gi \
-  --no-allow-unauthenticated \
-  --set-env-vars GROQ_API_KEY=<your-groq-key>
-
-# Let the app's identity call the gateway — THIS binding is the access control
-gcloud run services add-iam-policy-binding $CLOUD_RUN_SERVICE_GATEWAY \
-  --region $REGION \
-  --member="serviceAccount:$COMPUTE_SA" \
-  --role="roles/run.invoker"
-
-# Get the gateway URL and point the app at it
-GATEWAY_URL=$(gcloud run services describe $CLOUD_RUN_SERVICE_GATEWAY --region $REGION --format="value(status.url)")
-cd ../
 gcloud run deploy $CLOUD_RUN_SERVICE_APP \
   --source . --region $REGION \
-  --update-env-vars LLM_GATEWAY_URL=${GATEWAY_URL}/v1
+  --update-env-vars FALLBACK_MODEL_NAME=<groq-model-id>
 ```
 
-**Bug hit here:** a shared `LITELLM_MASTER_KEY` sent as a Bearer token was
-intercepted by Cloud Run's IAM layer (which expects a Google ID token in
-that header) and rejected with a platform-level 401 before LiteLLM saw it.
-Fixed by dropping the shared secret entirely and minting a real Google ID
-token in `hr_assistant/llm.py`. See doc 14. No master key exists on the
-final gateway.
-
-```bash
-# Verify: the gateway's OWN app log shows a 200 on /v1/chat/completions
-gcloud run services logs read $CLOUD_RUN_SERVICE_GATEWAY --region $REGION --limit=40
-```
+**Why no gateway service:** an earlier version ran LiteLLM as a *separate*
+private Cloud Run service. It hit a real wall — a shared `LITELLM_MASTER_KEY`
+sent as a Bearer token was intercepted by Cloud Run's own IAM layer (which
+expects a Google ID token in that header) and rejected with a platform-level
+401 before LiteLLM ever saw it. The fix was a per-request minted Google ID
+token. With a single app, the whole service — plus its IAM binding and token
+minting — buys nothing the in-process SDK doesn't already give (see doc 14),
+so it was removed.
 
 ---
 
@@ -352,16 +335,13 @@ gcloud run services logs read $CLOUD_RUN_SERVICE_APP --region $REGION --limit=50
 **In order. None of this is reversible.**
 
 ```bash
-# 1. Delete the gateway service
-gcloud run services delete $CLOUD_RUN_SERVICE_GATEWAY --region $REGION
-
-# 2. Delete the main app service
+# 1. Delete the app service
 gcloud run services delete $CLOUD_RUN_SERVICE_APP --region $REGION
 
-# 3. Delete the OAuth secret
+# 2. Delete the OAuth secret
 gcloud secrets delete $SECRET_NAME
 
-# 4. Delete the Qdrant collections (external to GCP)
+# 3. Delete the Qdrant collections (external to GCP)
 python -c "
 from qdrant_client import QdrantClient
 from hr_assistant import config
@@ -370,22 +350,22 @@ client.delete_collection(config.QDRANT_COLLECTION_NAME)
 client.delete_collection(config.QDRANT_NOISY_COLLECTION_NAME)
 "
 
-# 5. Delete the Model Armor template
+# 4. Delete the Model Armor template
 gcloud model-armor templates delete $MODEL_ARMOR_TEMPLATE_ID --location=$MODEL_ARMOR_LOCATION --project=$PROJECT_ID
 
-# 6. Delete the bucket and every document in it
+# 5. Delete the bucket and every document in it
 gcloud storage rm --recursive gs://$GCS_BUCKET_NAME
 
-# 7. (Optional) disable the APIs
+# 6. (Optional) disable the APIs
 gcloud services disable run.googleapis.com aiplatform.googleapis.com \
   modelarmor.googleapis.com storage.googleapis.com secretmanager.googleapis.com \
   cloudbuild.googleapis.com artifactregistry.googleapis.com \
   --project=$PROJECT_ID
 
-# 8. Delete the whole project — the real teardown, stops all billing
+# 7. Delete the whole project — the real teardown, stops all billing
 gcloud projects delete $PROJECT_ID
 
-# 9. Local cleanup
+# 8. Local cleanup
 rm -rf genenv
 rm .env
 ```
@@ -395,24 +375,20 @@ Projects are held ~30 days before permanent deletion
 
 ## Cost note
 
-Nothing here has a meaningful *standing* cost. Both Cloud Run services
-scale to zero when idle. Everything else (Qdrant free tier, Jina free
+Nothing here has a meaningful *standing* cost. The Cloud Run service
+scales to zero when idle. Everything else (Qdrant free tier, Jina free
 credits, Cloud Storage at this scale, Model Armor and Gemini Flash
-pay-per-call, Secret Manager) is free or near-free.
+pay-per-call, Groq free credits, Secret Manager) is free or near-free.
 
 ## Model migration (gemini-2.5-flash retires ~2026-10-20)
 
 The model IDs are env-overridable — no code change needed:
 
 ```bash
-# 1. point the app at the new model
+# point the app at the new model — llm.py's LiteLLM router picks it up,
+# still prefixed "vertex_ai/". No other change.
 gcloud run deploy $CLOUD_RUN_SERVICE_APP --source . --region $REGION \
   --update-env-vars LLM_MODEL_NAME=<new-gemini-3.x-flash-id>
-
-# 2. match it in the gateway config (gateway/litellm-config.yaml:
-#    model_name AND model:vertex_ai/<id> must both be the new id), redeploy
-cd gateway/ && gcloud run deploy $CLOUD_RUN_SERVICE_GATEWAY --source . --region $REGION --memory=1Gi
-cd ../
 ```
 
 Current model IDs:

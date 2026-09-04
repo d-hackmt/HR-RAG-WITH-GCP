@@ -4,7 +4,7 @@ Quick rules. Full context: the `hr-assistant-dev` skill and `docs/`.
 
 ## Do
 
-- Read a file completely before editing it (no git safety net here).
+- Read a file completely before editing it.
 - Put every setting in `hr_assistant/config.py`, sourced from `.env` —
   including model IDs (`LLM_MODEL_NAME` / `EMBEDDING_MODEL_NAME` /
   `RERANKER_MODEL_NAME`). Never hardcode a model string elsewhere.
@@ -35,4 +35,5 @@ Quick rules. Full context: the `hr-assistant-dev` skill and `docs/`.
 - Don't route the deployed app through the noisy collection — it uses the
   clean `hr_policies` collection with the guarded tool.
 - Don't assume POSIX — Windows host, PowerShell shell.
-- Don't delete files — this isn't version-controlled.
+- Don't delete files without a reason — it's a git repo (`origin/main`),
+  but deletions still need to be deliberate.

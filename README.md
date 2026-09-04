@@ -3,8 +3,8 @@
 A working RAG agent that answers HR-policy questions from real policy
 documents — retrieval, metadata filtering, hybrid search, and re-ranking
 for grounded answers. Hardened with guardrails, memory, and a semantic
-cache; deployed to Google Cloud Run behind Google OAuth with a governed
-LLM gateway.
+cache; deployed to Google Cloud Run behind Google OAuth, with every model
+call routed through a LiteLLM fallback (Gemini → Groq).
 
 ## Quick start
 
@@ -19,8 +19,9 @@ streamlit run app.py          # chat UI
 ```
 
 `.env` needs: `PROJECT_ID`, `LOCATION`, `GCS_BUCKET_NAME`, `JINA_API_KEY`,
-`QDRANT_URL`, `QDRANT_API_KEY`. For `evaluate.py` also add
-`LANGSMITH_API_KEY` and `GROQ_API_KEY`. Local dev without a Model Armor
+`QDRANT_URL`, `QDRANT_API_KEY`. `GROQ_API_KEY` enables the app's fallback
+model (Gemini → Groq) and is required by `evaluate.py`; `LANGSMITH_API_KEY`
+is also required by `evaluate.py`. Local dev without a Model Armor
 template: set `GUARDRAIL_PROVIDER=gemini_lite` (or `none`). Full
 provisioning: **[commands.md](commands.md)**.
 
@@ -48,6 +49,6 @@ Read `docs/` in order:
 
 **Reliability** — [09 Noisy Corpus, Memory & Cache](docs/09-reliability.md) · [10 Evaluation & Red-Teaming](docs/10-evaluation-and-redteam.md)
 
-**Deployment & governance** — [11 GCP, APIs & IAM](docs/11-gcp-apis-and-iam.md) · [12 Containerization & Cloud Run](docs/12-containerization-and-cloud-run.md) · [13 Access Control](docs/13-access-control.md) · [14 LLM Gateway](docs/14-llm-gateway.md) · [15 Content Guardrails](docs/15-content-guardrails.md) · [16 Hosting Architecture](docs/16-hosting-architecture.md)
+**Deployment & governance** — [11 GCP, APIs & IAM](docs/11-gcp-apis-and-iam.md) · [12 Containerization & Cloud Run](docs/12-containerization-and-cloud-run.md) · [13 Access Control](docs/13-access-control.md) · [14 LLM Routing & Fallback](docs/14-llm-routing.md) · [15 Content Guardrails](docs/15-content-guardrails.md) · [16 Hosting Architecture](docs/16-hosting-architecture.md)
 
 **Reference** — [commands.md](commands.md) (every command, creation to teardown) · [summary.md](summary.md) (project snapshot + known limitations, for handoff)

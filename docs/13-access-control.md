@@ -76,4 +76,4 @@ Two steps, because two systems enforce access:
 
 Miss either step and that person is blocked.
 
-Next: **[doc 14 — LLM Gateway](14-llm-gateway.md)**.
+Next: **[doc 14 — LLM Routing & Fallback](14-llm-routing.md)**.

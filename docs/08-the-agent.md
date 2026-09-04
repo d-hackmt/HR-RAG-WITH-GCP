@@ -7,7 +7,7 @@ uses it to answer a question.
 
 | File | Job |
 |---|---|
-| `hr_assistant/llm.py` | Connects to the model (Vertex AI Gemini, or the gateway — doc 14) |
+| `hr_assistant/llm.py` | Connects to the model — Vertex AI Gemini, with a Groq fallback via the LiteLLM Router (doc 14) |
 | `hr_assistant/tools.py` | Wraps "retrieve → re-rank → return cited text" as one tool the model can call |
 | `hr_assistant/agent.py` | Builds the agent: model + tool + system prompt + memory |
 | `hr_assistant/pipeline.py` | The single entry point `main.py` and `app.py` both call |

@@ -13,15 +13,16 @@ description: >-
 ## What it is
 
 A RAG agent answering company HR-policy questions from real policy
-documents, with citations. Deployed on Google Cloud Run behind Google OAuth
-with a governed LLM gateway. Full explanation: `docs/01`-`docs/16`. Fast
-orientation: `summary.md`. This skill is the "before you touch the code"
-brief.
+documents, with citations. Deployed on Google Cloud Run behind Google OAuth;
+every model call is routed in-process by a LiteLLM Router (Gemini primary,
+Groq fallback — `hr_assistant/llm.py`, doc 14). Full explanation:
+`docs/01`-`docs/16`. Fast orientation: `summary.md`. This skill is the
+"before you touch the code" brief.
 
 ## Non-negotiable rules
 
-- **Not a git repo.** No history, no undo. Never delete or overwrite a file
-  you have not read. Prefer additive edits.
+- **Git repo, pushed to GitHub** (`origin/main`). Still: read a file before
+  you edit or overwrite it, and don't delete without a reason.
 - **`.env` holds LIVE secrets** (Jina, Qdrant, LangSmith, Groq). Never edit
   it, never print it, never paste its contents. A PreToolUse hook blocks
   writes to it. Config defaults go in `hr_assistant/config.py`; new

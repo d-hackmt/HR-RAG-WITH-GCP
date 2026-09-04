@@ -48,24 +48,27 @@ QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "hr_policies")
 # of the clean single-domain collection above.
 QDRANT_NOISY_COLLECTION_NAME = os.getenv("QDRANT_NOISY_COLLECTION_NAME", "hr_policies_noisy_demo")
 
-## LLM GATEWAY (optional — leave unset to call Vertex directly).
-# Auth is a minted Google ID token (see hr_assistant/llm.py), not a key.
-LLM_GATEWAY_URL = os.getenv("LLM_GATEWAY_URL")
-
 ## GOOGLE OAUTH — verified employees only (see app.py)
 ALLOWED_EMPLOYEE_EMAILS = {
     e.strip() for e in os.getenv("ALLOWED_EMPLOYEE_EMAILS", "").split(",") if e.strip()
 }
 
 ## MODELS
-# All three are env-overridable so a model swap needs no code change — set
+# All four are env-overridable so a model swap needs no code change — set
 # the variable in .env (local) or the Cloud Run service config (deployed).
 
 # gemini-2.5-flash is GA but scheduled for retirement ~2026-10-20 (verified
-# Sept 2026). Migrate to a Gemini 3.x Flash model before then — set
-# LLM_MODEL_NAME here AND the matching model_name in gateway/litellm-config.yaml.
-# Current IDs: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versions
+# Sept 2026). Migrate to a Gemini 3.x Flash model before then — just set
+# LLM_MODEL_NAME (no code change; hr_assistant/llm.py prefixes it with
+# "vertex_ai/"). Current IDs:
+# https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versions
 LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-2.5-flash")
+
+# Fallback model — served by Groq if the Vertex Gemini call errors (see
+# hr_assistant/llm.py's LiteLLM Router). llm.py prefixes this with "groq/".
+# Needs GROQ_API_KEY set; without it the primary still works, the fallback
+# just can't fire.
+FALLBACK_MODEL_NAME = os.getenv("FALLBACK_MODEL_NAME", "openai/gpt-oss-20b")
 
 # jina-embeddings-v2-base-en: 768-dim, English. This is what the existing
 # Qdrant collections were built with — changing it changes the vector
@@ -150,12 +153,12 @@ LANGSMITH_ENDPOINT = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchai
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "hr-policy-assistant")
 
-## JUDGE LLM — Groq, read here only by hr_assistant/evaluation.py.
+## JUDGE LLM — Groq, read by hr_assistant/evaluation.py.
 # A different model family from the app's Gemini, so the eval isn't the
 # model grading its own answers. gpt-oss on Groq is OpenAI-API-compatible,
 # so langchain-openai's ChatOpenAI talks to it directly — no new dependency.
-# (The LLM gateway also uses GROQ_API_KEY, as its fallback model, but reads
-#  it from its own environment — see gateway/litellm-config.yaml.)
+# GROQ_API_KEY is also the credential for the app's fallback model
+# (FALLBACK_MODEL_NAME, above — see hr_assistant/llm.py).
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
