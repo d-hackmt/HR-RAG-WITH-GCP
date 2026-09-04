@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "hr_reliability_agent": "./hr_assistant/studio_graph.py:graph"
+    "hr_agent": "./hr_assistant/studio_graph.py:graph"
   },
   "env": ".env"
 }

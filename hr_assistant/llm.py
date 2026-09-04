@@ -2,8 +2,7 @@
 
 One place, one model: get_llm() returns a LangChain chat model that calls
 Vertex AI Gemini directly (config.LLM_MODEL_NAME). Auth is Application
-Default Credentials — `gcloud auth application-default login` locally, the
-service account on Cloud Run.
+Default Credentials (`gcloud auth application-default login`).
 
 Deliberately tiny at this stage. Fallback routing (a second provider if
 Vertex errors) is added in a later stage.
