@@ -169,16 +169,15 @@ JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "openai/gpt-oss-120b")
 
 def check_api_keys() -> None:
     """Stop early with a clear message if a required key/config is missing."""
-    missing = []
-    if not PROJECT_ID:
-        missing.append("PROJECT_ID")
-    if not JINA_API_KEY:
-        missing.append("JINA_API_KEY")
-    if not QDRANT_URL:
-        missing.append("QDRANT_URL")
-    if not QDRANT_API_KEY:
-        missing.append("QDRANT_API_KEY")
-    if not GCS_BUCKET_NAME:
-        missing.append("GCS_BUCKET_NAME")
+    missing = [
+        name for name, value in [
+            ("PROJECT_ID", PROJECT_ID),
+            ("JINA_API_KEY", JINA_API_KEY),
+            ("QDRANT_URL", QDRANT_URL),
+            ("QDRANT_API_KEY", QDRANT_API_KEY),
+            ("GCS_BUCKET_NAME", GCS_BUCKET_NAME),
+        ]
+        if not value
+    ]
     if missing:
         raise ValueError(f"Missing required .env values: {', '.join(missing)}")
