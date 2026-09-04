@@ -1,11 +1,11 @@
 """08 · vector_store — store chunk embeddings in Qdrant Cloud and search them.
 
-Covers hybrid (dense + sparse/BM25) retrieval.
+Covers retrieval, metadata filtering, and hybrid (dense + sparse) search.
 
 Two entry points:
   - build_vector_store(chunks, ...)  — embed + upsert. Only ingestion (09) calls this.
   - load_vector_store(name)          — connect to an EXISTING collection, no
-                                       embedding. pipeline (14) uses this.
+                                       embedding. pipeline / evaluation use this.
 """
 
 import uuid
@@ -13,6 +13,7 @@ from functools import lru_cache
 
 from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
+from qdrant_client.models import FieldCondition, Filter, MatchAny, PayloadSchemaType
 
 from hr_assistant import config
 from hr_assistant.embeddings import get_embeddings_model
@@ -79,28 +80,60 @@ def build_vector_store(chunks, hybrid: bool = True, collection_name: str = confi
     """Embed every chunk and upsert into a Qdrant Cloud collection.
 
     hybrid=True (the default, matching load_vector_store) also computes
-    sparse (keyword/BM25) vectors — a DENSE-only collection built here can't
-    later be opened in hybrid mode. collection_name defaults to the clean HR
-    collection; ingestion also builds the mixed
+    sparse (keyword/BM25) vectors — a DENSE-only collection built here
+    can't later be opened in hybrid mode. collection_name defaults to the
+    clean HR collection; ingestion also builds the mixed
     config.QDRANT_NOISY_COLLECTION_NAME.
     """
+    embeddings_model = get_embeddings_model()
+
     kwargs = dict(
         documents=chunks,
-        embedding=get_embeddings_model(),
+        embedding=embeddings_model,
         ids=[_stable_chunk_id(c) for c in chunks],
         url=config.QDRANT_URL,
         api_key=config.QDRANT_API_KEY,
         collection_name=collection_name,
     )
+
     if hybrid:
         kwargs["sparse_embedding"] = FastEmbedSparse(model_name=_SPARSE_MODEL)
         kwargs["retrieval_mode"] = RetrievalMode.HYBRID
     else:
         kwargs["retrieval_mode"] = RetrievalMode.DENSE
 
-    return QdrantVectorStore.from_documents(**kwargs)
+    store = QdrantVectorStore.from_documents(**kwargs)
+
+    # Qdrant's query_points API (used under hybrid/dense search alike)
+    # requires a payload index to filter on a field — without this,
+    # get_retriever's filter_categories fails with "Index required but not
+    # found". Idempotent, safe to call every time.
+    store.client.create_payload_index(
+        collection_name=collection_name,
+        field_name="metadata.policy_category",
+        field_schema=PayloadSchemaType.KEYWORD,
+    )
+
+    return store
 
 
-def get_retriever(vector_store: QdrantVectorStore, k: int = config.TOP_K_RESULTS):
-    """Turn a vector store into a retriever that returns the top `k` chunks."""
-    return vector_store.as_retriever(search_kwargs={"k": k})
+def get_retriever(
+    vector_store: QdrantVectorStore,
+    k: int = config.TOP_K_RESULTS,
+    filter_categories: set[str] | list[str] | None = None,
+):
+    """Turn a vector store into a retriever.
+
+    filter_categories restricts results to an allow-list of policy
+    categories — pass a single-element set for one category, or
+    config.HR_POLICY_CATEGORIES for the hard scope guardrail in
+    hr_assistant/tools.py's guarded search tool.
+    """
+    search_kwargs = {"k": k}
+
+    if filter_categories:
+        search_kwargs["filter"] = Filter(
+            must=[FieldCondition(key="metadata.policy_category", match=MatchAny(any=list(filter_categories)))]
+        )
+
+    return vector_store.as_retriever(search_kwargs=search_kwargs)

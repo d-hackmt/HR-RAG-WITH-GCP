@@ -1,4 +1,4 @@
-"""15 · tracing — LangSmith tracing: turn it on, and a quick check it works.
+"""18 · tracing — LangSmith tracing: turn it on, and a quick check it works.
 
 LangSmith needs no wiring in our own code: LangChain / LangGraph read
 LANGSMITH_TRACING / LANGSMITH_ENDPOINT / LANGSMITH_API_KEY /

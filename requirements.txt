@@ -11,8 +11,12 @@ langchain-community
 langchain-text-splitters
 langgraph>=0.2
 
-# LLM — Vertex AI Gemini (called directly)
+# LLM — Vertex AI Gemini primary + Groq fallback, routed in-process by the
+# LiteLLM SDK (hr_assistant/llm.py). langchain-openai is the eval judge only.
 langchain-google-genai
+langchain-openai
+litellm
+langchain-litellm
 
 # vector store — Qdrant Cloud (dense + sparse/BM25 hybrid)
 langchain-qdrant
@@ -30,9 +34,16 @@ requests
 
 # web app
 streamlit
+Authlib
+
+# reliability — Model Armor safety guardrail, numpy for the semantic cache
+google-cloud-modelarmor
+numpy
+pydantic
 
 # LangGraph Studio (local visual debugger — run `langgraph dev`)
 langgraph-cli[inmem]
 
-# LangSmith — request tracing
+# LangSmith — tracing + evaluation (datasets/experiments); openevals = judge prompts
 langsmith
+openevals

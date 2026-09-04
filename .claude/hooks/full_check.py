@@ -19,9 +19,9 @@ from pathlib import Path
 
 # (regex, why it is worth a look) -- advisory only, never blocks.
 STALE_PATTERNS = [
-    (r"TODO\(", "unfinished tracked TODO left in the tree"),
-    (r"\b(guardrails|semantic_cache|thread_memory|check_input|check_output|ChatLiteLLMRouter|create_guarded_search_tool)\b",
-     "reference to a security-branch concept that shouldn't be on basic-rag"),
+    (r"TODO\(guardrails\)", "unfinished guardrails work left in the tree"),
+    (r"\bask\(\s*[A-Za-z_][A-Za-z_0-9]*\s*,\s*(?:question|prompt|q\d|inputs)\b",
+     "ask() called without a cache argument -- signature is ask(agent, cache, question, ...)"),
 ]
 
 

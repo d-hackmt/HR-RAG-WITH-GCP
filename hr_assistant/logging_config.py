@@ -1,11 +1,18 @@
 """03 · logging_config — one place to turn on readable console logging.
 
-The library modules (ingestion, processor) emit their operational lines —
-ingestion progress and the like — through `logging` at INFO, not bare
-print(). Errors go through logger.warning / logger.exception. Entry points
-call `configure_logging()` so those lines show on stdout / the Streamlit
-server console — not in the chat UI. Bare print() is only for a script's
-own output.
+The library modules (pipeline, guardrails, semantic_cache, ingestion,
+processor) emit their operational lines — guardrail pass/block, cache
+hit/miss, ingestion progress — through `logging` at INFO, not bare
+print(). Errors go through logger.warning / logger.exception.
+
+The CLI entry points call `configure_logging()` so those INFO lines show
+on stdout. app.py (Streamlit) calls it too; the lines then land in the
+server console / Cloud Run logs, which is where operational telemetry
+belongs — not in the chat UI.
+
+Bare print() is still used for a script's own *output* (the demo Q&A
+display, red-team progress markers, "Ingestion complete") — that is not
+logging.
 """
 
 import logging

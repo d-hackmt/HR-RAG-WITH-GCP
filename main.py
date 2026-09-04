@@ -1,4 +1,4 @@
-"""17 · main.py — entry point: command-line demo.
+"""22 · main.py — entry point: command-line demo, the full secure pipeline.
 
 Run `python ingest.py` once first, then:  python main.py
 """
@@ -8,10 +8,12 @@ from hr_assistant.pipeline import ask, build_hr_assistant
 
 
 def main():
-    configure_logging()
+    configure_logging()  # show the INPUT/OUTPUT GUARDRAIL + CACHE lines
     print("Connecting to the HR policy assistant...")
-    # Bootstraps ingestion on the first run if the collection is missing.
-    agent = build_hr_assistant()
+    # (agent, cache) — the guarded, cached stack. ask() runs the full
+    # input/output safety pipeline around it. Bootstraps ingestion on the
+    # first run if the collection is missing.
+    agent, cache = build_hr_assistant()
     print("Assistant ready!\n")
 
     demo_questions = [
@@ -26,7 +28,7 @@ def main():
         print("=" * 60)
         print("QUESTION:", question)
         print("-" * 60)
-        answer = ask(agent, question)
+        answer = ask(agent, cache, question)
         print("ANSWER:", answer)
         print("=" * 60)
         print()
