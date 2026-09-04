@@ -1,0 +1,26 @@
+# The app calls whatever config.LLM_MODEL_NAME is (default "gemini-2.5-flash").
+# LiteLLM routes that model_name to Vertex AI Gemini, and falls back to Groq
+# (Llama 3.3 70B) if the Vertex call errors out (quota, region outage, 5xx).
+# Groq needs GROQ_API_KEY in the gateway's environment — see commands.md, Phase 12.
+#
+# gemini-2.5-flash retires ~2026-10-20. When you migrate: set LLM_MODEL_NAME
+# on the app AND change model_name + model below to the new Gemini 3.x Flash
+# id (they must match), then redeploy the gateway.
+
+model_list:
+  - model_name: gemini-2.5-flash          # must equal the app's LLM_MODEL_NAME
+    litellm_params:
+      model: vertex_ai/gemini-2.5-flash
+      vertex_project: rag-hr-assistant-demo
+      vertex_location: us-central1
+
+  - model_name: groq-fallback
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+litellm_settings:
+  drop_params: true
+  num_retries: 2
+  fallbacks:
+    - gemini-2.5-flash: ["groq-fallback"]

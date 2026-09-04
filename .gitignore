@@ -1,0 +1,24 @@
+# Secrets — live credentials, never commit
+.env
+
+# Python bytecode / caches
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtualenvs
+hrrenv/
+hrenv/
+genenv/
+.venv/
+venv/
+.venv_eval/
+
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

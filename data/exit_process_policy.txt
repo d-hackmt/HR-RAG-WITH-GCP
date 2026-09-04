@@ -1,0 +1,30 @@
+EXIT PROCESS POLICY
+
+Policy Category: Exit Process
+
+1. Purpose
+This policy describes the steps an employee and the company follow between resignation (or termination) and the employee's last working day.
+
+2. Resignation Submission
+Employees who wish to resign must submit their resignation in writing through the HR portal, triggering the notice period described in the Notice Period Policy. The resignation is acknowledged by the manager and HR within 3 working days.
+
+3. Exit Interview
+HR schedules an exit interview with every departing employee during their final week, to gather feedback on their experience and reasons for leaving. Participation is encouraged but not mandatory.
+
+4. Knowledge Handover
+As described in the Notice Period Policy, the departing employee prepares a written handover document and works with their manager to transition ongoing responsibilities to a colleague or successor before their last working day.
+
+5. Return of Company Assets
+All company-issued assets, including laptops, access cards, mobile devices, and any physical documents, must be returned to IT or facilities on or before the last working day. Failure to return assets may result in their cost being deducted from the final settlement.
+
+6. Access Revocation
+IT revokes the employee's access to company systems, email, and physical premises at 11:59 PM on the last working day, unless a different time is required for security reasons.
+
+7. Final Settlement
+The final settlement, including any pending salary, unused annual leave encashment (up to the carry-forward limit defined in the Leave Policy), and reimbursement of approved pending claims, is processed within 45 days of the last working day, in line with standard payroll cycles.
+
+8. Full and Final Documents
+HR issues a relieving letter and experience certificate to the employee within 10 working days of the last working day, provided all handover and asset return requirements have been completed.
+
+9. Rehire Eligibility
+Employees who leave in good standing, having completed the full exit process, remain eligible for future rehire consideration, subject to standard hiring processes at the time.

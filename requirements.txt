@@ -1,0 +1,47 @@
+python-dotenv
+
+# orchestration
+# langchain 1.x is required — hr_assistant/agent.py uses
+# `from langchain.agents import create_agent` (the v1 agent API). A resolve
+# to 0.3.x breaks that import. After any deliberate upgrade, `pip freeze`
+# and pin exact versions here.
+langchain>=1.0,<2
+langchain-core>=1.0,<2
+langchain-community
+langchain-text-splitters
+langgraph>=0.2
+
+# LLM — Vertex AI Gemini (app) + OpenAI-compatible client (gateway, Groq judge)
+langchain-google-genai
+langchain-openai
+httpx  # used directly in hr_assistant/llm.py (gateway token-refresh hook); ships with openai anyway
+
+# vector store — Qdrant Cloud (dense + sparse/BM25 hybrid)
+langchain-qdrant
+qdrant-client
+fastembed
+
+# document ingestion — Cloud Storage + multi-format parsing (pdf/docx/pptx)
+google-cloud-storage
+pypdf
+python-docx
+python-pptx
+
+# Jina reranker — plain REST calls
+requests
+
+# web app
+streamlit
+Authlib
+
+# reliability — Model Armor safety guardrail, numpy for the semantic cache
+google-cloud-modelarmor
+numpy
+pydantic
+
+# LangGraph Studio (local visual debugger — run `langgraph dev`)
+langgraph-cli[inmem]
+
+# LangSmith — tracing + evaluation (datasets/experiments); openevals = judge prompts
+langsmith
+openevals

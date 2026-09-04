@@ -1,0 +1,27 @@
+# Secrets
+.env
+.env.example
+
+# VCS / tooling
+.git
+.gitignore
+.claude/
+
+# Python bytecode / caches (any depth)
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Virtualenvs
+hrrenv/
+hrenv/
+genenv/
+.venv/
+venv/
+.venv_eval/
+
+# Not needed in the image
+docs/
+results/
+*.md
+langgraph.json
