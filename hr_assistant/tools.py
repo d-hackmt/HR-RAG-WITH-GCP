@@ -1,17 +1,13 @@
-"""Wrap retrieval + re-ranking as a tool the agent can call.
+"""11 · tools — wrap retrieve (08) + re-rank (10) as one tool the agent calls.
 
-Retriever-as-tool, running the full pipeline: wide retrieval -> re-rank ->
-narrow, cited result.
+Retriever-as-tool: wide retrieval -> re-rank -> narrow, cited result.
 
-create_guarded_search_tool(): the default — the plain pipeline plus the
-scope guardrail (category allow-list + post-rerank relevance floor, see
-hr_assistant/config.py's HR_POLICY_CATEGORIES / RELEVANCE_THRESHOLD).
-Used against BOTH collections: the clean `hr_policies` (deployed app) and
-the mixed `hr_policies_noisy_demo` (demo / red-team).
+create_guarded_search_tool(): the default — plus the scope guardrail
+(category allow-list + post-rerank relevance floor, see config's
+HR_POLICY_CATEGORIES / RELEVANCE_THRESHOLD). Every real path uses this.
 
 create_search_tool(): the plain tool — no category filter, no relevance
-gate. Kept only for the red-team plain baseline
-(pipeline.build_plain_assistant); nothing user-facing uses it.
+gate. Kept only for the red-team plain baseline (build_plain_assistant).
 """
 
 from langchain.tools import tool

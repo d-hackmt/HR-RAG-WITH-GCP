@@ -27,6 +27,10 @@ the guardrail model, house style). After a change, load
 
 ## Shape of the system
 
+- **Files are numbered.** Every module's docstring starts `NN · name — …`;
+  read `hr_assistant/` in that order (config 01 → pipeline 17 → entry
+  scripts 21–27). Keep files small and single-purpose; split + renumber if
+  one grows two jobs.
 - **Ingestion is separate.** `ingest.py` → `hr_assistant/ingestion.py` is
   the only writer to Qdrant. Everything else connects to what it built.
 - **Two collections:** `hr_policies` (clean — the deployed app) and

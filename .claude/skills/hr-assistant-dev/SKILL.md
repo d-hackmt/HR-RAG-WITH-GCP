@@ -40,6 +40,20 @@ Groq fallback — `hr_assistant/llm.py`, doc 14). Full explanation:
 - **Windows host.** PowerShell is the primary shell (Bash tool also
   available). Don't assume POSIX-only tooling.
 
+## Reading order
+
+Every file in `hr_assistant/` (and the root entry scripts) carries a
+`NN ·` number in its module docstring — read them in that order. Ingestion
+is 01–09, the query pipeline 10–17, then tracing / eval (18–20), then the
+entry scripts (21–27). Keep numbers dense and in dependency order when you
+add or move a file.
+
+Small, single-purpose files: `prompts.py` (02) holds the system-prompt
+text (not `config.py`); `thread_memory.py` (15) holds every checkpointer
+operation `pipeline.ask()` performs; `evaluation_dataset.py` (19) is the
+eval's Q/A pairs. `document_loader.py` (04) only *loads* text; the binary
+parsers live in `processor.py` (05).
+
 ## Architecture in one screen
 
 Ingestion is a SEPARATE pipeline. `ingest.py` -> `hr_assistant/ingestion.py`
@@ -87,9 +101,8 @@ finish.
   (`config.HR_POLICY_CATEGORIES`) + post-rerank `config.RELEVANCE_THRESHOLD`
   floor -> returns the `NOT_FOUND` sentinel, which
   `RELIABILITY_SYSTEM_PROMPT` turns into a clean refusal.
-- **C. Identity lock** -- `config._IDENTITY_LOCK_INSTRUCTION`, in both
-  system prompts. Enforced by the model at generation time, not a
-  classifier.
+- **C. Identity lock** -- `prompts._IDENTITY_LOCK`, folded into both system
+  prompts. Enforced by the model at generation time, not a classifier.
 
 The deployed app uses the CLEAN `hr_policies` collection with the guarded
 tool: the category filter is close to a no-op there (all docs are HR), but
@@ -98,10 +111,13 @@ instead of a stretchy answer.
 
 ## House style
 
-- Module docstring explains WHY the module exists, not just what.
-- Comments explain rationale and gotchas, not mechanics.
+- Module docstring's FIRST line is `NN · name — one-line purpose`; the rest
+  explains WHY the module exists.
+- Small, single-purpose files (roughly <150 lines of code). If a file grows
+  two responsibilities, split it and renumber.
 - Small functions, one job each. Match the surrounding verbosity -- this
   codebase writes long, explanatory docstrings on purpose.
+- Comments explain rationale and gotchas, not mechanics.
 - **Logging vs print:** operational lines (guardrail pass/block, cache
   hit/miss, ingestion progress) go through `logging` at INFO; errors
   through `logger.warning` / `logger.exception`. Entry points call

@@ -1,4 +1,5 @@
-"""Chop each document into small, searchable, overlapping chunks."""
+"""06 · splitter — chop each document into small, searchable, overlapping
+chunks (config.CHUNK_SIZE / CHUNK_OVERLAP)."""
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

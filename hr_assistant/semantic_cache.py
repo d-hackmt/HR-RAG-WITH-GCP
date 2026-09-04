@@ -1,4 +1,4 @@
-"""A simple in-memory semantic cache.
+"""14 · semantic_cache — a simple in-memory semantic cache.
 
 Embeds each question with the same Jina model used for retrieval, keeps a
 *bounded* in-memory list of (embedding, question, answer, timestamp), and

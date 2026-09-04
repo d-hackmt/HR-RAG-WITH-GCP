@@ -1,4 +1,4 @@
-"""One place to turn on readable console logging.
+"""03 · logging_config — one place to turn on readable console logging.
 
 The library modules (pipeline, guardrails, semantic_cache, ingestion,
 processor) emit their operational lines — guardrail pass/block, cache

@@ -1,4 +1,4 @@
-"""Run the LangSmith evaluation (correctness + groundedness) for the HR agent.
+"""26 · evaluate.py — entry point: run the LangSmith evaluation (20).
 
 Needs LANGSMITH_API_KEY and GROQ_API_KEY in .env. Results land in your
 LangSmith project as an Experiment on the 'hr-policy-qa' dataset.
@@ -6,7 +6,8 @@ LangSmith project as an Experiment on the 'hr-policy-qa' dataset.
 Run with:  python evaluate.py
 """
 
-from hr_assistant.evaluation import DATASET_NAME, run_evaluation
+from hr_assistant.evaluation import run_evaluation
+from hr_assistant.evaluation_dataset import DATASET_NAME
 from hr_assistant.logging_config import configure_logging
 
 

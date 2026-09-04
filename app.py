@@ -1,4 +1,5 @@
-"""Streamlit chat app for the HR Policy Assistant.
+"""23 · app.py — entry point: Streamlit chat UI, the full secure pipeline,
+behind a Google OAuth gate when [auth] secrets are configured.
 
 Run with:  streamlit run app.py
 """

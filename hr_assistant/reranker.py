@@ -1,7 +1,8 @@
-"""Re-rank retrieved candidates with Jina's cross-encoder reranker.
+"""10 · reranker — re-rank retrieved candidates with Jina's cross-encoder.
 
-Plain REST call — no extra SDK needed beyond `requests`.
-See https://jina.ai/reranker/
+Retrieval (08) is fast but rough; the reranker reads the question and each
+candidate chunk *together* and re-scores the shortlist. Plain REST call — no
+extra SDK beyond `requests`. See https://jina.ai/reranker/
 """
 
 import requests

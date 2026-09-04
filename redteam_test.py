@@ -1,4 +1,5 @@
-"""Adversarial red-team pass against both pipelines.
+"""25 · redteam_test.py — entry point: 7 adversarial attacks against both
+the guarded pipeline and a bare plain baseline, side by side.
 
 Runs 7 attacks (persona override, direct instruction override, roleplay
 scope escape, social-engineering scope escape, data enumeration, DAN

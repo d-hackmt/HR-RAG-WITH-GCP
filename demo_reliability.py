@@ -1,4 +1,5 @@
-"""Reliability walkthrough — noisy corpus, guardrails, memory, semantic cache.
+"""24 · demo_reliability.py — entry point: reliability walkthrough over the
+noisy corpus (guardrails, scope filter, memory, semantic cache).
 
 Builds the guarded agent (mixed HR + noise corpus + guarded search tool +
 memory + semantic cache + input/output safety guardrail) and walks through

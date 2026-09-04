@@ -1,4 +1,4 @@
-"""Connect to the LLM.
+"""12 · llm — connect to the model.
 
 Every model call in the app goes through one place: get_llm(). It returns a
 LangChain chat model backed by a LiteLLM *Router* (the litellm SDK, running

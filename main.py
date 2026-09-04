@@ -1,4 +1,4 @@
-"""Command-line demo of the HR Policy Assistant.
+"""22 · main.py — entry point: command-line demo, the full secure pipeline.
 
 Run `python ingest.py` once first, then:  python main.py
 """

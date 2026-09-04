@@ -1,4 +1,4 @@
-"""Turn text into vectors using Jina.
+"""07 · embeddings — turn text into vectors using Jina.
 
 Jina uses a plain API key (JINA_API_KEY), not GCP's ADC-based auth — a
 deliberate multi-vendor choice.

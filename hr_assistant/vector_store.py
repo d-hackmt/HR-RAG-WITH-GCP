@@ -1,12 +1,11 @@
-"""Store chunk embeddings in Qdrant Cloud and search them.
+"""08 · vector_store — store chunk embeddings in Qdrant Cloud and search them.
 
 Covers retrieval, metadata filtering, and hybrid (dense + sparse) search.
 
 Two entry points:
-  - build_vector_store(chunks, ...)  — embed + upsert. Only ingest.py calls this.
+  - build_vector_store(chunks, ...)  — embed + upsert. Only ingestion (09) calls this.
   - load_vector_store(name)          — connect to an EXISTING collection, no
-                                       embedding. main.py / app.py / evaluate.py
-                                       use this.
+                                       embedding. pipeline / evaluation use this.
 """
 
 import uuid

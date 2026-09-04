@@ -1,4 +1,4 @@
-"""LangGraph Studio entry point.
+"""27 · studio_graph — entry point: LangGraph Studio (`langgraph dev`).
 
 Exposes the reliability agent's compiled graph so `langgraph dev` can
 visualize and step through it (nodes, edges, state at each step, tool

@@ -1,6 +1,6 @@
-"""Input/output SAFETY guardrail.
+"""13 · guardrails — input/output SAFETY guardrail.
 
-Not to be confused with the RAG SCOPE guardrail in hr_assistant/tools.py
+Not to be confused with the RAG SCOPE guardrail in hr_assistant/tools.py (11)
 (category filter + relevance threshold, which stops non-HR content from
 ever being retrieved). This module screens the raw text going in and out
 of the agent for prompt injection/jailbreak attempts and unsafe/sensitive

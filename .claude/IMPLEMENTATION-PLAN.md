@@ -147,6 +147,35 @@ Fallback model is now `openai/gpt-oss-20b` on Groq (was `llama-3.3-70b`).
 - Exact Groq id: `groq/openai/gpt-oss-20b` vs `groq/gpt-oss-20b` (LiteLLM
   slash-parsing quirk) — adjust `FALLBACK_MODEL_NAME` if needed.
 
+---
+
+## Round 4 — flow numbering + modularization (all branches)
+
+Every module in `hr_assistant/` and every root entry script now starts its
+docstring with `NN · name — …`, numbered in reading order (config 01 →
+pipeline 17 → entry scripts 21–27). Split for single responsibility:
+
+- [x] `prompts.py` (02) — the two system prompts + identity lock + adaptive
+  length, moved out of `config.py`. `config.py` is settings only.
+  `_IDENTITY_LOCK_INSTRUCTION` → `prompts._IDENTITY_LOCK`.
+- [x] `document_loader.py` (04) — now *loads text only*
+  (`load_documents_from_gcs`, `load_processed_documents_from_gcs`,
+  `extract_policy_category`). The binary parsers (`_parse_pdf/docx/pptx`,
+  `parse_blob`) moved into `processor.py` (05); `iter_parsed_raw_files`
+  inlined into `process_raw_to_json`.
+- [x] `thread_memory.py` (15) — every checkpointer operation `ask()`
+  performs: `invoke_agent`, `record_turn`, `overwrite_answer`,
+  `input_text_for_screening`, `thread_config` (all de-underscored). Moved
+  out of `pipeline.py`, which is now just builders + `ask` / `ask_plain`.
+- [x] `evaluation_dataset.py` (19) — `DATASET_NAME` + the 18 `TEST_CASES`,
+  moved out of `evaluation.py`. `evaluate.py` imports `DATASET_NAME` from
+  the new module.
+- [x] `__init__.py` — one-line "read the numbers" note.
+- [x] Every other module: `NN ·` header line, no logic change.
+- [x] Applied to all four branches (basic-rag uses its own dense 01–19).
+
+compileall clean on every branch.
+
 ## Call-site map (keep in sync)
 
 | Caller | Builder | Ask fn |
