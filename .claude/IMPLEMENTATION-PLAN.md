@@ -171,10 +171,25 @@ pipeline 17 → entry scripts 21–27). Split for single responsibility:
   moved out of `evaluation.py`. `evaluate.py` imports `DATASET_NAME` from
   the new module.
 - [x] `__init__.py` — one-line "read the numbers" note.
+- [x] `config.check_api_keys` — table-driven (identical across all branches).
 - [x] Every other module: `NN ·` header line, no logic change.
 - [x] Applied to all four branches (basic-rag uses its own dense 01–19).
 
-compileall clean on every branch.
+### Audit (behaviour-preservation, done statically)
+
+- `prompts.py` strings byte-identical to the old `config.py` (checked).
+- `thread_memory` helper bodies byte-identical to the old `pipeline.py`
+  helpers; `ask` / `ask_plain` / builders unchanged in identifier flow.
+- `document_loader` kept-functions and the `processor` parsers byte-identical
+  to the originals; `process_raw_to_json` = old body with the one-call
+  `iter_parsed_raw_files` inlined.
+- `config.py` module constants: zero added / removed / changed.
+- `evaluation` functions unchanged; `agent._build_agent` byte-identical.
+- `vector_store.py` kept identical across all four branches (basic-rag
+  included) so Qdrant collections stay interchangeable between stages.
+- compileall clean, no unused imports / private funcs, no forward
+  references (numbering = valid dependency order), no import cycles — on
+  every branch. `deployment` tree == `main` tree (0 diff).
 
 ## Call-site map (keep in sync)
 
