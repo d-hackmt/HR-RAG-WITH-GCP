@@ -1,8 +1,8 @@
 """16 · agent — the LLM + search tool + system prompt + memory, tied
 together by LangChain's create_agent.
 
-Two variants, differing only in which prompt they run:
-  create_hr_agent           — config-plain SYSTEM_PROMPT (red-team baseline)
+Two variants, differing only in which prompt (from prompts.py, 02) they run:
+  create_hr_agent           — plain SYSTEM_PROMPT (red-team baseline)
   create_reliability_agent  — RELIABILITY_SYSTEM_PROMPT (every real path)
 """
 
