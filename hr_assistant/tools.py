@@ -59,10 +59,14 @@ def create_guarded_search_tool(vector_store):
     def search_hr_policy(question: str) -> str:
         """Search the HR policy documents for information about leave, work from home,
         probation, notice period, reimbursement, code of conduct, holidays, maternity/
-        paternity leave, travel expenses, or the exit process. Do not use this for
+        paternity leave, travel expenses, or the exit process.
+        
+        Do not use this for
         Finance, Sales, Operations, or Business questions — it will not find anything."""
         retriever = get_retriever(
-            vector_store, k=config.RERANK_CANDIDATE_K, filter_categories=config.HR_POLICY_CATEGORIES
+            vector_store, 
+            k=config.RERANK_CANDIDATE_K, 
+            filter_categories=config.HR_POLICY_CATEGORIES
         )
         candidates = retriever.invoke(question)
         if not candidates:

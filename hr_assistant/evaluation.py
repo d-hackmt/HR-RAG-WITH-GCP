@@ -23,10 +23,11 @@ from hr_assistant import config
 from hr_assistant.agent import create_reliability_agent
 from hr_assistant.evaluation_dataset import DATASET_NAME, TEST_CASES
 from hr_assistant.llm import get_llm
-from hr_assistant.pipeline import ask_plain
+from hr_assistant.pipeline import ask
 from hr_assistant.reranker import rerank
+from hr_assistant.semantic_cache import SemanticCache
 from hr_assistant.tools import create_guarded_search_tool
-from hr_assistant.tracing import enable_tracing
+from hr_assistant.tracing import check_langsmith_tracing
 from hr_assistant.vector_store import get_retriever, load_vector_store
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ def _ensure_dataset(client: Client):
 
 def run_evaluation():
     """Upload the dataset (if needed) and run correctness + groundedness."""
-    enable_tracing()
+    check_langsmith_tracing()
     client = Client()
     dataset = _ensure_dataset(client)
 
@@ -74,8 +75,9 @@ def run_evaluation():
     # retrieve (RERANK_CANDIDATE_K), then Jina re-rank down to TOP_K_RESULTS
     # — so groundedness is judged against the chunks the agent actually
     # reasons over, not a looser separate query.
-    vector_store = load_vector_store(config.QDRANT_COLLECTION_NAME)
+    vector_store = load_vector_store(config.QDRANT_NOISY_COLLECTION_NAME)
     agent = create_reliability_agent(get_llm(), [create_guarded_search_tool(vector_store)])
+    cache = SemanticCache()
     retriever = get_retriever(
         vector_store,
         k=config.RERANK_CANDIDATE_K,
@@ -83,15 +85,13 @@ def run_evaluation():
     )
 
     def target(inputs: dict) -> dict:
-        """Run one question through the real agent, and rebuild the chunks
-        its search tool would have handed the model so groundedness is
-        checked against that exact evidence. A fresh thread_id per question
-        keeps them independent.
-
-        ask_plain() — no Model Armor in/out here: this measures answer
-        quality, and a flagged answer shouldn't silently drop a data point."""
+        """Run one question through the real secured agent — input guardrail,
+        semantic cache, output guardrail, the same as app.py/main.py — and
+        rebuild the chunks its search tool would have handed the model so
+        groundedness is checked against that exact evidence. A fresh
+        thread_id per question keeps them independent."""
         question = inputs["question"]
-        answer = ask_plain(agent, question, thread_id=f"eval-{uuid.uuid4()}")
+        answer = ask(agent, cache, question, thread_id=f"eval-{uuid.uuid4()}")
         candidates = retriever.invoke(question)
         top_chunks = rerank(question, candidates, top_n=config.TOP_K_RESULTS)
         context = "\n\n".join(chunk.page_content for chunk in top_chunks)

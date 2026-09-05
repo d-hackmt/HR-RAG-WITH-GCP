@@ -14,14 +14,14 @@ import json
 from google.cloud import storage
 from langchain_core.documents import Document
 
-# langchain document cotains 2 things
+# langchain document cotains 2 things 
 
 # 1) pagecontent: the text content of the document
 # 2) metadata: a dictionary of metadata about the document, such as the source,
 
 from hr_assistant import config
 
-## extract policy
+## extract policy 
 def extract_policy_category(text: str) -> str:
     """Every policy file starts with a 'Policy Category: X' line (HR docs)
     or a 'Category: X' line (noise docs) — pull whichever is present out.
@@ -35,7 +35,7 @@ def extract_policy_category(text: str) -> str:
     return "Unknown"
 
 
-# load raw data from gcs
+# load raw data from gcs 
 
 def load_documents_from_gcs(
     bucket_name: str = config.GCS_BUCKET_NAME,
@@ -92,7 +92,6 @@ def load_processed_documents_from_gcs(
                 },
             ))
     return documents
-
 
 
 

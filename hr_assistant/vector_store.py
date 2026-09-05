@@ -19,8 +19,8 @@ from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchAny, PayloadSchemaType
 
-# langchain doc
-# page contetn and metadata are stored in the payload,
+# langchain doc 
+# page contetn and metadata are stored in the payload, 
 # and the vector is stored in the vector field.
 
 from hr_assistant import config
@@ -89,7 +89,8 @@ def _stable_chunk_id(chunk) -> str:
     return str(uuid.uuid5(_ID_NAMESPACE, key))
 
 
-def build_vector_store(chunks, hybrid: bool = True,
+
+def build_vector_store(chunks, hybrid: bool = True, 
         collection_name: str = config.QDRANT_COLLECTION_NAME) -> QdrantVectorStore:
     """Embed every chunk and upsert into a Qdrant Cloud collection.
 
