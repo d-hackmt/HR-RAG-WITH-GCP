@@ -10,6 +10,8 @@ fresh setup.
 
 import logging
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from hr_assistant import config
 from hr_assistant.agent import create_hr_agent
 from hr_assistant.llm import get_llm
@@ -32,17 +34,27 @@ def _bootstrap_collection(collection_name: str, ingest_fn) -> None:
     ingest_fn()
 
 
-def build_hr_assistant():
+def build_hr_assistant(checkpointer=None):
     """Connect to the clean `hr_policies` collection and build the agent
     (search tool + system prompt + memory). Returns a bare agent; drive it
-    with ask()."""
+    with ask().
+
+    checkpointer defaults to an InMemorySaver (real chat memory for the CLI
+    and Streamlit UI). Pass checkpointer=False from studio_graph.py to build
+    the graph with none — `langgraph dev` supplies persistence itself and
+    rejects a graph with one baked in."""
     from hr_assistant.ingestion import ingest_hr_policies
 
     config.check_api_keys()
     _bootstrap_collection(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
 
+    if checkpointer is None:
+        checkpointer = InMemorySaver()
+    elif checkpointer is False:
+        checkpointer = None
+
     vector_store = load_vector_store(config.QDRANT_COLLECTION_NAME)
-    return create_hr_agent(get_llm(), [create_search_tool(vector_store)])
+    return create_hr_agent(get_llm(), [create_search_tool(vector_store)], checkpointer=checkpointer)
 
 
 def ask(agent, question: str, thread_id: str = "default-session") -> str:
@@ -56,7 +68,8 @@ def ask(agent, question: str, thread_id: str = "default-session") -> str:
     returns content as a list of blocks carrying a "thought signature"
     alongside the text; `.text` extracts just the plain string regardless."""
     response = agent.invoke(
-        {"messages": [{"role": "user", "content": question}]},
+        {"messages": [{"role": "user",
+                "content": question}]},
         config={"configurable": {"thread_id": thread_id}},
     )
     return response["messages"][-1].text

@@ -12,7 +12,9 @@ from hr_assistant import config
 JINA_RERANK_URL = "https://api.jina.ai/v1/rerank"
 
 
-def rerank(query: str, candidates: list, top_n: int = config.TOP_K_RESULTS) -> list:
+def rerank(query: str, 
+    candidates: list, 
+    top_n: int = config.TOP_K_RESULTS) -> list:
     """Re-rank `candidates` (a wide shortlist — see RERANK_CANDIDATE_K) and
     return the top `top_n` Documents, best first."""
     if not candidates:
@@ -38,3 +40,7 @@ def rerank(query: str, candidates: list, top_n: int = config.TOP_K_RESULTS) -> l
     # each result carries an "index" back into the original candidates list
     ranked = response.json()["results"]
     return [candidates[r["index"]] for r in ranked]
+
+
+
+

@@ -93,7 +93,10 @@ def ingest_noisy_corpus(force: bool = False) -> None:
     )
 
 
-def run_ingestion(force: bool = False, hr: bool = True, noisy: bool = True, upload: bool = True) -> None:
+def run_ingestion(force: bool = False, 
+    hr: bool = True, 
+    noisy: bool = True, 
+    upload: bool = True) -> None:
     config.check_api_keys()
     if upload:
         upload_corpus_to_gcs()

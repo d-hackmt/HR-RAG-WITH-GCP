@@ -11,7 +11,7 @@ from hr_assistant.pipeline import build_hr_assistant
 
 configure_logging()
 
-agent = build_hr_assistant()
+agent = build_hr_assistant(checkpointer=False)
 
 # langgraph.json points at this module-level name
 graph = agent

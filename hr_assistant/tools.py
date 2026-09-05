@@ -16,12 +16,17 @@ def create_search_tool(vector_store):
 
     @tool
     def search_hr_policy(question: str) -> str:
-        """Search the HR policy documents for information about leave, work from home,
-        probation, notice period, reimbursement, code of conduct, holidays, maternity/
+        """Search the HR policy documents for information about leave,
+        work from home,
+        probation, notice period, 
+        reimbursement, code of conduct, 
+        holidays, maternity/
         paternity leave, travel expenses, or the exit process."""
-        retriever = get_retriever(vector_store, k=config.RERANK_CANDIDATE_K)
+        retriever = get_retriever(vector_store, 
+                        k=config.RERANK_CANDIDATE_K)
         candidates = retriever.invoke(question)
-        top_chunks = rerank(question, candidates, top_n=config.TOP_K_RESULTS)
+        top_chunks = rerank(question, candidates, 
+                    top_n=config.TOP_K_RESULTS)
 
         return "\n\n".join(
             f"[Source: {c.metadata['source']}]\n{c.page_content}" for c in top_chunks

@@ -9,27 +9,14 @@ import streamlit as st
 
 from hr_assistant.logging_config import configure_logging
 from hr_assistant.pipeline import ask, build_hr_assistant
-from hr_assistant.tracing import check_langsmith_tracing, enable_tracing
+from hr_assistant.tracing import check_langsmith_tracing
 
 configure_logging()
-enable_tracing()  # let LangChain see LANGSMITH_* before any agent runs
+check_langsmith_tracing()  # logs once whether this run is traced
 
 st.set_page_config(page_title="HR Policy Assistant", page_icon="🤖")
 st.title("🤖 HR Policy Assistant")
 st.caption("Ask me anything about company HR policy — leave, WFH, notice period, and more.")
-
-
-@st.cache_resource(show_spinner=False)
-def _tracing_status():
-    """Run the LangSmith connectivity check once per session."""
-    try:
-        return check_langsmith_tracing()
-    except Exception as exc:  # never let a health check break the app
-        return False, f"LangSmith check errored: {exc}"
-
-
-_ok, _msg = _tracing_status()
-st.sidebar.caption(("🟢 " if _ok else "⚪ ") + _msg)
 
 
 @st.cache_resource(show_spinner="Setting up the assistant (only happens once)...")
