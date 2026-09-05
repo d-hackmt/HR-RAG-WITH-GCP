@@ -75,4 +75,6 @@ def get_llm():
     A LangChain chat model (supports tool calling and structured output), so
     agent.py and guardrails.py use it unchanged. temperature=0 is set once
     here — the single source of truth for both backends."""
-    return ChatLiteLLMRouter(router=_get_router(), model_name=_PRIMARY_GROUP, temperature=0)
+    return ChatLiteLLMRouter(router=_get_router(),
+                model_name=_PRIMARY_GROUP, 
+            temperature=0)

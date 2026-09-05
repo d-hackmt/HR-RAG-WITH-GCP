@@ -13,6 +13,8 @@ it already built, and bootstrap it once only on a completely fresh setup.
 
 import logging
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from hr_assistant import config, thread_memory
 from hr_assistant.agent import create_hr_agent, create_reliability_agent
 from hr_assistant.guardrails import check_input, check_output
@@ -42,7 +44,19 @@ def _bootstrap_collection(collection_name: str, ingest_fn) -> None:
     ingest_fn()
 
 
-def _build_guarded_assistant(collection_name: str, ingest_fn):
+def _resolve_checkpointer(checkpointer):
+    """None (the default) -> a real InMemorySaver, for the CLI/Streamlit
+    path. False -> no checkpointer at all, for studio_graph.py — langgraph
+    dev supplies its own persistence and rejects a graph with one already
+    baked in. Anything else (a real checkpointer object) passes through."""
+    if checkpointer is None:
+        return InMemorySaver()
+    if checkpointer is False:
+        return None
+    return checkpointer
+
+
+def _build_guarded_assistant(collection_name: str, ingest_fn, checkpointer=None):
     """The secure stack: guarded search tool + RELIABILITY_SYSTEM_PROMPT +
     short-term memory + a semantic cache. Returns (agent, cache). ask() adds
     the input/output safety guardrails around this."""
@@ -50,28 +64,30 @@ def _build_guarded_assistant(collection_name: str, ingest_fn):
     _bootstrap_collection(collection_name, ingest_fn)
 
     vector_store = load_vector_store(collection_name)
-    agent = create_reliability_agent(get_llm(), [create_guarded_search_tool(vector_store)])
+    agent = create_reliability_agent(
+        get_llm(), [create_guarded_search_tool(vector_store)], checkpointer=_resolve_checkpointer(checkpointer)
+    )
     return agent, SemanticCache()
 
 
-def build_hr_assistant():
+def build_hr_assistant(checkpointer=None):
     """The app's assistant — the guarded stack against the clean
     `hr_policies` collection. Returns (agent, cache); drive it with ask()."""
     from hr_assistant.ingestion import ingest_hr_policies
 
-    return _build_guarded_assistant(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
+    return _build_guarded_assistant(config.QDRANT_COLLECTION_NAME, ingest_hr_policies, checkpointer=checkpointer)
 
 
-def build_reliability_assistant():
+def build_reliability_assistant(checkpointer=None):
     """The same guarded stack against the mixed HR + noise
-    `hr_policies_noisy_demo` collection — used by demo_reliability.py and
-    redteam_test.py. Returns (agent, cache)."""
+    `hr_policies_noisy_demo` collection — used by demo_reliability.py,
+    redteam_test.py, and studio_graph.py. Returns (agent, cache)."""
     from hr_assistant.ingestion import ingest_noisy_corpus
 
-    return _build_guarded_assistant(config.QDRANT_NOISY_COLLECTION_NAME, ingest_noisy_corpus)
+    return _build_guarded_assistant(config.QDRANT_NOISY_COLLECTION_NAME, ingest_noisy_corpus, checkpointer=checkpointer)
 
 
-def build_plain_assistant():
+def build_plain_assistant(checkpointer=None):
     """No guardrails at all: the plain search tool + the plain SYSTEM_PROMPT
     + memory. Kept ONLY as the red-team before/after baseline
     (redteam_test.py). Returns a bare agent; drive it with ask_plain()."""
@@ -81,7 +97,9 @@ def build_plain_assistant():
     _bootstrap_collection(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
 
     vector_store = load_vector_store(config.QDRANT_COLLECTION_NAME)
-    return create_hr_agent(get_llm(), [create_search_tool(vector_store)])
+    return create_hr_agent(
+        get_llm(), [create_search_tool(vector_store)], checkpointer=_resolve_checkpointer(checkpointer)
+    )
 
 
 # ── Asking ────────────────────────────────────────────────────────────────

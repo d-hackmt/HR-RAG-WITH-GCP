@@ -2,7 +2,9 @@
 
 Not to be confused with the RAG SCOPE guardrail in hr_assistant/tools.py (11)
 (category filter + relevance threshold, which stops non-HR content from
-ever being retrieved). This module screens the raw text going in and out
+ever being retrieved). 
+
+This module screens the raw text going in and out
 of the agent for prompt injection/jailbreak attempts and unsafe/sensitive
 content — a different failure mode, checked a different way.
 
@@ -12,10 +14,12 @@ one-time template (see commands.md, Phase 5) and the Model Armor API
 enabled.
 
 Fallback: config.GUARDRAIL_PROVIDER="gemini_lite" — a single cheap Gemini
-structured-output call classifying safe/unsafe. No new GCP API/template
+structured-output
+call classifying safe/unsafe. No new GCP API/template
 needed.
 
-Both check_input() and check_output() are @traceable so they show up as
+Both check_input() and check_output() are 
+@traceable so they show up as
 their own spans in LangSmith, not just the LLM/agent calls around them —
 see hr_assistant/pipeline.py for how they're wired into the flow.
 
@@ -65,10 +69,12 @@ def _check_with_model_armor(text: str, direction: str) -> tuple[bool, str]:
     data = modelarmor_v1.DataItem(text=text)
 
     if direction == "input":
-        request = modelarmor_v1.SanitizeUserPromptRequest(name=_model_armor_template(), user_prompt_data=data)
+        request = modelarmor_v1.SanitizeUserPromptRequest(name=_model_armor_template(),
+                                                user_prompt_data=data)
         result = client.sanitize_user_prompt(request=request).sanitization_result
     else:
-        request = modelarmor_v1.SanitizeModelResponseRequest(name=_model_armor_template(), model_response_data=data)
+        request = modelarmor_v1.SanitizeModelResponseRequest(name=_model_armor_template(),
+                                            model_response_data=data)
         result = client.sanitize_model_response(request=request).sanitization_result
 
     blocked = result.filter_match_state == modelarmor_v1.FilterMatchState.MATCH_FOUND
@@ -108,7 +114,9 @@ def _check_with_gemini_lite(text: str, direction: str) -> tuple[bool, str]:
 
 
 def _on_provider_error(direction: str, exc: Exception) -> tuple[bool, str]:
-    """Provider call raised. Decide allow/deny by direction (see the module
+    """Provider call raised.
+    
+    Decide allow/deny by direction (see the module
     docstring): input fails closed, output fails open, both overridable."""
     logger.exception("Guardrail provider error on %s check", direction)
     fail_open = (

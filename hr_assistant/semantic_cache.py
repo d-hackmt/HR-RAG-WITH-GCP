@@ -2,7 +2,9 @@
 
 Embeds each question with the same Jina model used for retrieval, keeps a
 *bounded* in-memory list of (embedding, question, answer, timestamp), and
-on a new question compares by cosine similarity. Above
+on a new question compares by cosine similarity. 
+
+Above
 config.SEMANTIC_CACHE_THRESHOLD -> return the cached answer instantly,
 skipping retrieval + rerank + the LLM.
 

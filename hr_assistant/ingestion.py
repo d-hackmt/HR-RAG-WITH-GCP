@@ -62,8 +62,8 @@ def ingest_hr_policies(force: bool = False) -> None:
 
 
 def ingest_noisy_corpus(force: bool = False) -> None:
-    """The mixed HR + noise collection used by demo_reliability.py and
-    redteam_test.py to test retrieval against real cross-domain noise.
+    """The mixed HR + noise collection — built alongside the clean one so a
+    later stage can test retrieval against real cross-domain noise.
 
     Raw pdf/docx/pptx are parsed into the processed JSON zone first —
     always on force=True, otherwise only when that zone is still empty."""
@@ -93,7 +93,10 @@ def ingest_noisy_corpus(force: bool = False) -> None:
     )
 
 
-def run_ingestion(force: bool = False, hr: bool = True, noisy: bool = True, upload: bool = True) -> None:
+def run_ingestion(force: bool = False, 
+    hr: bool = True, 
+    noisy: bool = True, 
+    upload: bool = True) -> None:
     config.check_api_keys()
     if upload:
         upload_corpus_to_gcs()

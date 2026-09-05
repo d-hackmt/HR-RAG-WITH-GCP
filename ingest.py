@@ -22,11 +22,16 @@ from hr_assistant.logging_config import configure_logging
 
 def main():
     configure_logging()
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--force", action="store_true", help="rebuild collections even if they already exist")
-    parser.add_argument("--hr-only", action="store_true", help="only ingest the clean HR collection")
-    parser.add_argument("--noisy-only", action="store_true", help="only ingest the mixed HR + noise collection")
-    parser.add_argument("--no-upload", action="store_true", help="skip uploading local data/ to GCS")
+    parser = argparse.ArgumentParser(description=__doc__, 
+                formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--force", action="store_true", 
+                help="rebuild collections even if they already exist")
+    parser.add_argument("--hr-only", 
+                action="store_true", help="only ingest the clean HR collection")
+    parser.add_argument("--noisy-only", 
+            action="store_true", help="only ingest the mixed HR + noise collection")
+    parser.add_argument("--no-upload", 
+            action="store_true", help="skip uploading local data/ to GCS")
     args = parser.parse_args()
 
     hr = not args.noisy_only
