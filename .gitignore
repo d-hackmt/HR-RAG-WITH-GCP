@@ -22,3 +22,7 @@ venv/
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+# Local command references — real project values, not pushed
+commands-basic-rag.md
+commands-security.md
