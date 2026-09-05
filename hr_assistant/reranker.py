@@ -42,7 +42,9 @@ def rerank_with_scores(query: str, candidates: list, top_n: int = config.TOP_K_R
     return [(candidates[r["index"]], r["relevance_score"]) for r in ranked]
 
 
-def rerank(query: str, candidates: list, top_n: int = config.TOP_K_RESULTS) -> list:
+def rerank(query: str,
+    candidates: list,
+    top_n: int = config.TOP_K_RESULTS) -> list:
     """Just the re-ordered Documents, no scores. Thin wrapper around
     rerank_with_scores()."""
     return [doc for doc, _score in rerank_with_scores(query, candidates, top_n)]

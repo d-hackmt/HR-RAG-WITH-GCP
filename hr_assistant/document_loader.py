@@ -3,7 +3,7 @@
 Two readers, nothing else:
   load_documents_from_gcs()            — the raw .txt HR policies (raw zone)
   load_processed_documents_from_gcs()  — the parsed JSON records (processed
-                                         zone), written by processor.py (05)
+                        zone), written by processor.py (05)
 
 Binary formats (.pdf/.docx/.pptx) are parsed in processor.py, not here —
 this file only loads text that is already text.
@@ -14,9 +14,14 @@ import json
 from google.cloud import storage
 from langchain_core.documents import Document
 
+# langchain document cotains 2 things
+
+# 1) pagecontent: the text content of the document
+# 2) metadata: a dictionary of metadata about the document, such as the source,
+
 from hr_assistant import config
 
-
+## extract policy
 def extract_policy_category(text: str) -> str:
     """Every policy file starts with a 'Policy Category: X' line (HR docs)
     or a 'Category: X' line (noise docs) — pull whichever is present out.
@@ -29,6 +34,8 @@ def extract_policy_category(text: str) -> str:
             return line.split(":", 1)[1].strip()
     return "Unknown"
 
+
+# load raw data from gcs
 
 def load_documents_from_gcs(
     bucket_name: str = config.GCS_BUCKET_NAME,
@@ -57,6 +64,9 @@ def load_documents_from_gcs(
     return documents
 
 
+# load processed data from gcs
+
+
 def load_processed_documents_from_gcs(
     bucket_name: str = config.GCS_BUCKET_NAME,
     prefixes: tuple[str, ...] = (config.PROCESSED_HR_PREFIX, config.PROCESSED_NOISE_PREFIX),
@@ -82,3 +92,7 @@ def load_processed_documents_from_gcs(
                 },
             ))
     return documents
+
+
+
+

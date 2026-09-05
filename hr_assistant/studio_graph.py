@@ -17,7 +17,7 @@ configure_logging()
 # input/output safety guardrails live in pipeline.ask(), not the agent, so
 # they are not exercised here. That's intentional: Studio is for inspecting
 # the agent's own nodes/edges/state.
-agent, _cache = build_reliability_assistant()
+agent, _cache = build_reliability_assistant(checkpointer=False)
 
 # langgraph.json points at this module-level name
 graph = agent

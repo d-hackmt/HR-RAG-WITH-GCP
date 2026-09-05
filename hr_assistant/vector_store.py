@@ -2,11 +2,15 @@
 
 Covers retrieval, metadata filtering, and hybrid (dense + sparse) search.
 
+DENSE - vector search
+SPARSE - keyword search
+
 Two entry points:
   - build_vector_store(chunks, ...)  — embed + upsert. Only ingestion (09) calls this.
   - load_vector_store(name)          — connect to an EXISTING collection, no
-                                       embedding. pipeline / evaluation use this.
+                            embedding. pipeline / evaluation use this.
 """
+
 
 import uuid
 from functools import lru_cache
@@ -15,18 +19,23 @@ from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchAny, PayloadSchemaType
 
+# langchain doc
+# page contetn and metadata are stored in the payload,
+# and the vector is stored in the vector field.
+
 from hr_assistant import config
 from hr_assistant.embeddings import get_embeddings_model
 
-_ID_NAMESPACE = uuid.UUID("5b9c1a1e-8b1a-4f7d-9d5e-2b6a7c9d1e3f")  # fixed, arbitrary
-_SPARSE_MODEL = "Qdrant/bm25"
 
+_ID_NAMESPACE = uuid.UUID("5b9c1a1e-8b1a-4f7d-9d5e-2b6a7c9d1e3f")  # fixed, arbitrary
+_SPARSE_MODEL = "Qdrant/bm25" #keyword search
 
 @lru_cache(maxsize=1)
 def _qdrant_client() -> QdrantClient:
     """One client for the process — collection_exists() is called a few
     times per startup and QdrantClient holds a connection pool."""
-    return QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY)
+    return QdrantClient(url=config.QDRANT_URL,
+            api_key=config.QDRANT_API_KEY)
 
 
 def collection_exists(collection_name: str) -> bool:
@@ -35,6 +44,9 @@ def collection_exists(collection_name: str) -> bool:
     if not client.collection_exists(collection_name):
         return False
     return client.count(collection_name).count > 0
+
+
+# load our vector store (Qdrant collection) for retrieval, filtering, and hybrid search
 
 
 def load_vector_store(
@@ -66,6 +78,7 @@ def load_vector_store(
     return QdrantVectorStore.from_existing_collection(**kwargs)
 
 
+
 def _stable_chunk_id(chunk) -> str:
     """Deterministic point ID from (source, chunk text) — the same chunk
     always maps to the same Qdrant point ID. Without this,
@@ -76,7 +89,8 @@ def _stable_chunk_id(chunk) -> str:
     return str(uuid.uuid5(_ID_NAMESPACE, key))
 
 
-def build_vector_store(chunks, hybrid: bool = True, collection_name: str = config.QDRANT_COLLECTION_NAME) -> QdrantVectorStore:
+def build_vector_store(chunks, hybrid: bool = True,
+        collection_name: str = config.QDRANT_COLLECTION_NAME) -> QdrantVectorStore:
     """Embed every chunk and upsert into a Qdrant Cloud collection.
 
     hybrid=True (the default, matching load_vector_store) also computes
@@ -133,7 +147,10 @@ def get_retriever(
 
     if filter_categories:
         search_kwargs["filter"] = Filter(
-            must=[FieldCondition(key="metadata.policy_category", match=MatchAny(any=list(filter_categories)))]
+            must=[FieldCondition(key="metadata.policy_category",
+                    match=MatchAny(any=list(filter_categories)))]
         )
 
     return vector_store.as_retriever(search_kwargs=search_kwargs)
+
+

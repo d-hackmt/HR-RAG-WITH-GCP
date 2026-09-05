@@ -22,3 +22,7 @@ venv/
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+
+commands-basic-rag.md
+commands-security.md
