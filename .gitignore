@@ -27,3 +27,14 @@ Thumbs.db
 commands-basic-rag.md
 commands-security.md
 commands-deployment.md
+
+# Claude Code tooling — local only, not in the repo
+.claude/
+
+# Local, secret-bearing / machine-specific — never commit
+.streamlit/
+deploy.env.yaml
+plan.csv
+commands/commands-basic-rag.md
+commands/commands-security.md
+commands/commands-deployment.md
