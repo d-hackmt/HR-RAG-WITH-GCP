@@ -236,4 +236,4 @@ actual string mismatch.
 ---
 
 Next: back to **[README](../README.md)** · full command list in
-**[commands.md](../commands.md)**.
+**[commands/commands.md](../commands/commands.md)**.

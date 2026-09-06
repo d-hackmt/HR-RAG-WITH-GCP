@@ -96,7 +96,7 @@ gcloud run deploy hr-rag-assistant \
   which is where Streamlit looks for it. This is what flips the app from
   "open local mode" to enforcing the login gate.
 
-Full command list: **[commands.md](../commands.md)** Phases 10–11. Hitting
+Full command list: **[commands/commands.md](../commands/commands.md)** Phases 10–11. Hitting
 `redirect_uri_mismatch` or a login loop? **[doc 17](17-troubleshooting.md)**.
 
 Next: **[doc 13 — Access Control](13-access-control.md)**.

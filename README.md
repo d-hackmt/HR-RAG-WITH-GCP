@@ -23,7 +23,7 @@ streamlit run app.py          # chat UI
 model (Gemini → Groq) and is required by `evaluate.py`; `LANGSMITH_API_KEY`
 is also required by `evaluate.py`. Local dev without a Model Armor
 template: set `GUARDRAIL_PROVIDER=gemini_lite` (or `none`). Full
-provisioning: **[commands.md](commands.md)**.
+provisioning: **[commands/commands.md](commands/commands.md)**.
 
 ## The scripts
 
@@ -53,4 +53,4 @@ Read `docs/` in order:
 
 **Troubleshooting** — [17 Troubleshooting](docs/17-troubleshooting.md) (every error hit during build + deploy, and its fix)
 
-**Reference** — [commands.md](commands.md) — every command from project creation to teardown, with real values.
+**Reference** — [commands/commands.md](commands/commands.md) — every command from project creation to teardown, with real values.

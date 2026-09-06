@@ -75,6 +75,6 @@ cache hit after step 4 skips straight to the answer, past steps 5–8.*
 | OAuth client ID / secret / cookie key | Secret Manager, `streamlit-auth` |
 | Qdrant + Jina + Groq API keys | Cloud Run env vars on `hr-rag-assistant` |
 
-That's the whole system. See **[commands.md](../commands.md)** to build it,
+That's the whole system. See **[commands/commands.md](../commands/commands.md)** to build it,
 and **[doc 17 — Troubleshooting](17-troubleshooting.md)** for every error
 that came up along the way.

@@ -30,3 +30,11 @@ commands-security.md
 commands-deployment.md
 
 plan.csv
+
+# Claude Code tooling — local only, not in the repo
+.claude/
+
+# Local, secret-bearing / machine-specific — never commit
+commands/commands-basic-rag.md
+commands/commands-security.md
+commands/commands-deployment.md
