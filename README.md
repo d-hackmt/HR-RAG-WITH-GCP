@@ -23,7 +23,7 @@ streamlit run app.py          # chat UI
 model (Gemini → Groq) and is required by `evaluate.py`; `LANGSMITH_API_KEY`
 is also required by `evaluate.py`. Local dev without a Model Armor
 template: set `GUARDRAIL_PROVIDER=gemini_lite` (or `none`). Full
-provisioning: **[commands.md](commands.md)**.
+provisioning: **[commands/commands.md](commands/commands.md)**.
 
 ## The scripts
 
@@ -51,4 +51,4 @@ Read `docs/` in order:
 
 **Deployment & governance** — [11 GCP, APIs & IAM](docs/11-gcp-apis-and-iam.md) · [12 Containerization & Cloud Run](docs/12-containerization-and-cloud-run.md) · [13 Access Control](docs/13-access-control.md) · [14 LLM Routing & Fallback](docs/14-llm-routing.md) · [15 Content Guardrails](docs/15-content-guardrails.md) · [16 Hosting Architecture](docs/16-hosting-architecture.md)
 
-**Reference** — [commands.md](commands.md) (every command, creation to teardown) · [summary.md](summary.md) (project snapshot + known limitations, for handoff)
+**Reference** — [commands/commands.md](commands/commands.md) (every command, creation to teardown) · [summary.md](summary.md) (project snapshot + known limitations, for handoff)

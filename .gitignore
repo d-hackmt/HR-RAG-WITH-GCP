@@ -22,3 +22,17 @@ venv/
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+# Claude Code tooling — local only, not in the repo
+.claude/
+
+# Local, secret-bearing / machine-specific — never commit
+.streamlit/secrets.toml
+deploy.env.yaml
+plan.csv
+commands-basic-rag.md
+commands-security.md
+commands-deployment.md
+commands/commands-basic-rag.md
+commands/commands-security.md
+commands/commands-deployment.md
