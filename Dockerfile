@@ -1,8 +1,11 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 WORKDIR /app
 
+# uv, copied straight from its own image — no pip/curl install step needed.
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # Pre-download the BM25 model at BUILD time (see docs/12) so the container
 # never has to fetch it from HuggingFace on a cold start.

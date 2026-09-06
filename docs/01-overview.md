@@ -58,7 +58,7 @@ flowchart LR
 One Cloud Run service. Model routing and fallback (doc 14) run inside it,
 not as a separate service.
 
-> Known limitations are listed in [summary.md](../summary.md) — read them
-> before trusting the guardrail or eval numbers.
+> Hit an error building or deploying? Every one that came up in this
+> project — with the fix — is in **[doc 17 — Troubleshooting](17-troubleshooting.md)**.
 
 Next: **[doc 02 — Tech Stack](02-tech-stack.md)**.

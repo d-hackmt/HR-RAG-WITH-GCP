@@ -80,8 +80,9 @@ between "what we tested" and "what's running".
 > + reliability prompt (matching the deployed app) and rebuilds the
 > groundedness context the same way the tool does (retrieve 12 → re-rank to
 > 5, category-filtered), but it deliberately skips Model Armor in/out, the
-> sample is 18 hand-written cases with no variance reporting, and the
-> reference answers must be kept in sync with `data/*.txt`. See the
-> limitations section of [summary.md](../summary.md).
+> sample is small (9 hand-written cases active in
+> `hr_assistant/evaluation_dataset.py`, 9 more commented out ready to
+> enable) with no variance reporting, and the reference answers must be
+> kept in sync with `data/*.txt`.
 
 Next: **[doc 11 — GCP Role, APIs & IAM](11-gcp-apis-and-iam.md)**.

@@ -51,4 +51,6 @@ Read `docs/` in order:
 
 **Deployment & governance** — [11 GCP, APIs & IAM](docs/11-gcp-apis-and-iam.md) · [12 Containerization & Cloud Run](docs/12-containerization-and-cloud-run.md) · [13 Access Control](docs/13-access-control.md) · [14 LLM Routing & Fallback](docs/14-llm-routing.md) · [15 Content Guardrails](docs/15-content-guardrails.md) · [16 Hosting Architecture](docs/16-hosting-architecture.md)
 
-**Reference** — [commands.md](commands.md) (every command, creation to teardown) · [summary.md](summary.md) (project snapshot + known limitations, for handoff)
+**Troubleshooting** — [17 Troubleshooting](docs/17-troubleshooting.md) (every error hit during build + deploy, and its fix)
+
+**Reference** — [commands.md](commands.md) — every command from project creation to teardown, with real values.

@@ -76,5 +76,5 @@ cache hit after step 4 skips straight to the answer, past steps 5–8.*
 | Qdrant + Jina + Groq API keys | Cloud Run env vars on `hr-rag-assistant` |
 
 That's the whole system. See **[commands.md](../commands.md)** to build it,
-and **[summary.md](../summary.md)** for the current status and known
-limitations.
+and **[doc 17 — Troubleshooting](17-troubleshooting.md)** for every error
+that came up along the way.

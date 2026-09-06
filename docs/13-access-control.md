@@ -67,6 +67,19 @@ flowchart LR
 
 None of these live in code or in a `.env` on the server.
 
+The `secrets.toml` also carries a **`redirect_uri`** — where Google returns
+the user after login. Two rules that cause almost every OAuth failure:
+
+- It **must end in `/oauth2callback`** — that's the only path Streamlit's
+  login handler listens on. A bare URL makes login silently loop.
+- The string here must match a URI on the OAuth client's **Authorized
+  redirect URIs** list **character-for-character** (`https`, no trailing
+  slash, exact host). A mismatch is `Error 400: redirect_uri_mismatch`.
+
+So the OAuth client needs `https://<cloud-run-url>/oauth2callback`
+registered, and (for local testing) `http://localhost:8501/oauth2callback`
+too. Full symptoms + fixes: **[doc 17 — Troubleshooting](17-troubleshooting.md)**.
+
 ## Adding or removing an employee
 
 Two steps, because two systems enforce access:

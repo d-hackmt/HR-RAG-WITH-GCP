@@ -71,5 +71,5 @@ List these for the user:
 
 If behaviour or the pipeline table changed, update in the same pass:
 `docs/08`, `docs/09`, `docs/10`, `docs/14`, `docs/15`, `docs/16`,
-`summary.md`, `README.md`, and check whether `commands.md` needs a note.
-Doc drift is a real, recurring failure mode in this repo.
+`README.md`, and check whether `commands.md` or `docs/17` (troubleshooting)
+needs a note. Doc drift is a real, recurring failure mode in this repo.

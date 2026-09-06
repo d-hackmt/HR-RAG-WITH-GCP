@@ -68,18 +68,38 @@ gcloud auth application-default login
 gcloud auth application-default set-quota-project $PROJECT_ID
 ```
 
-## Phase 3 — Enable the core APIs
+## Phase 3 — Enable the APIs
+
+Seven APIs, in the order you first need them. You can enable just the first
+three now and the rest at Phase 10/11, or turn them all on at once:
 
 ```bash
-# Vertex AI — the Gemini model
-gcloud services enable aiplatform.googleapis.com --project=$PROJECT_ID
+# Everything the project uses, one command:
+gcloud services enable \
+  aiplatform.googleapis.com \
+  storage.googleapis.com \
+  modelarmor.googleapis.com \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  --project=$PROJECT_ID
 
-# Cloud Storage — holds the raw HR policy documents
-gcloud services enable storage.googleapis.com --project=$PROJECT_ID
-
-# Model Armor — the input/output safety guardrail
-gcloud services enable modelarmor.googleapis.com --project=$PROJECT_ID
+# Confirm all seven are on:
+gcloud services list --enabled --project=$PROJECT_ID \
+  --filter="config.name:(aiplatform.googleapis.com OR storage.googleapis.com OR modelarmor.googleapis.com OR run.googleapis.com OR cloudbuild.googleapis.com OR artifactregistry.googleapis.com OR secretmanager.googleapis.com)" \
+  --format="value(config.name)"
 ```
+
+| API | Needed for | First used in |
+|---|---|---|
+| `aiplatform.googleapis.com` | Vertex AI — the Gemini model | Phase 8 (ingest embeds) / 9 |
+| `storage.googleapis.com` | Cloud Storage — raw + processed documents | Phase 4 |
+| `modelarmor.googleapis.com` | Input/output safety guardrail | Phase 5 |
+| `run.googleapis.com` | Host the Cloud Run service | Phase 10 |
+| `cloudbuild.googleapis.com` | Build the image on `--source .` deploy | Phase 10 |
+| `artifactregistry.googleapis.com` | Store the built image | Phase 10 |
+| `secretmanager.googleapis.com` | Hold the OAuth login secret | Phase 11 |
 
 ## Phase 4 — Cloud Storage: create the bucket
 
@@ -115,8 +135,8 @@ gcloud model-armor templates describe $MODEL_ARMOR_TEMPLATE_ID --location=$MODEL
 
 ```bash
 # Isolated virtual environment
-uv venv genenv
-source genenv/Scripts/activate        # Git Bash / macOS / Linux
+uv venv hrrenv
+source hrrenv/Scripts/activate        # Git Bash / macOS / Linux
 uv pip install -r requirements.txt
 ```
 
@@ -188,62 +208,104 @@ docker compose run --rm eval    # one evaluation run
 
 ## Phase 10 — Deploy `hr-rag-assistant` to Cloud Run
 
-```bash
-# APIs needed to build and host a container
-gcloud services enable run.googleapis.com aiplatform.googleapis.com \
-  storage.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  --project=$PROJECT_ID
+APIs (`run`, `cloudbuild`, `artifactregistry`) were enabled in Phase 3.
+Grant the Cloud Run service account (`$COMPUTE_SA`, the default compute SA)
+its three roles:
 
-# Let the app's identity call Gemini
+```bash
+# Call Gemini
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:$COMPUTE_SA" --role="roles/aiplatform.user"
 
-# Let it READ (not write) the documents in Cloud Storage
+# READ (not write) the documents in Cloud Storage
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:$COMPUTE_SA" --role="roles/storage.objectViewer"
 
-# Let it call Model Armor
+# Call Model Armor
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:$COMPUTE_SA" --role="roles/modelarmor.user"
-
-# Build from the Dockerfile and deploy as a public web service
-# (public at the network level only — the real gate comes in Phase 11).
-# GROQ_API_KEY is the fallback model's credential — llm.py's LiteLLM router
-# uses Groq only if the Vertex Gemini call errors (see doc 14).
-gcloud run deploy $CLOUD_RUN_SERVICE_APP \
-  --source . \
-  --region $REGION \
-  --allow-unauthenticated \
-  --set-env-vars PROJECT_ID=$PROJECT_ID,LOCATION=$LOCATION,REGION=$REGION,GCS_BUCKET_NAME=$GCS_BUCKET_NAME,QDRANT_URL=<your-qdrant-url>,QDRANT_API_KEY=<your-qdrant-key>,QDRANT_COLLECTION_NAME=$QDRANT_COLLECTION_NAME,JINA_API_KEY=<your-jina-key>,GROQ_API_KEY=<your-groq-key>,GUARDRAIL_PROVIDER=model_armor,MODEL_ARMOR_LOCATION=$MODEL_ARMOR_LOCATION,MODEL_ARMOR_TEMPLATE_ID=$MODEL_ARMOR_TEMPLATE_ID
 ```
 
+Put the non-secret config + API keys in a gitignored `deploy.env.yaml`
+(YAML handles the commas in `ALLOWED_EMPLOYEE_EMAILS` that a plain
+`--set-env-vars` string can't):
+
+```yaml
+# deploy.env.yaml  — gitignored, never committed
+PROJECT_ID: "rag-hr-assistant-demo"
+LOCATION: "us-central1"
+GCS_BUCKET_NAME: "rag-hr-assistant-demo-hr-policies"
+QDRANT_COLLECTION_NAME: "hr_policies"
+QDRANT_NOISY_COLLECTION_NAME: "hr_policies_noisy_demo"
+GUARDRAIL_PROVIDER: "model_armor"
+MODEL_ARMOR_LOCATION: "us"
+MODEL_ARMOR_TEMPLATE_ID: "hr-assistant-guardrail"
+LANGSMITH_TRACING: "true"
+LANGSMITH_ENDPOINT: "https://api.smith.langchain.com"
+LANGSMITH_PROJECT: "hr-policy-assistant"
+JINA_API_KEY: "<your key>"
+QDRANT_URL: "<your url>"
+QDRANT_API_KEY: "<your key>"
+GROQ_API_KEY: "<your key>"
+LANGSMITH_API_KEY: "<your key>"
+ALLOWED_EMPLOYEE_EMAILS: "employee1@example.com,employee2@example.com"
+```
+
+Deploy — `--source .` builds the image on Cloud Build (from the `Dockerfile`,
+which installs deps with `uv`), pushes to Artifact Registry, and runs it.
+You never run `docker build` yourself:
+
+```bash
+gcloud run deploy $CLOUD_RUN_SERVICE_APP \
+  --source . \
+  --project=$PROJECT_ID \
+  --region=$REGION \
+  --allow-unauthenticated \
+  --env-vars-file=deploy.env.yaml
+```
+
+`--allow-unauthenticated` is public at the network layer only — the real
+gate is Phase 11. The output ends with the **Service URL** — note it, you
+need it next.
+
 **Bug hit here:** the first deploy crashed — `fastembed`'s BM25 model
-download was rate-limited on Cloud Run's shared IP. Fixed by adding one
-line to the `Dockerfile` that pre-downloads the model at *build* time.
-See doc 12. No new command — just a Dockerfile change and re-run the deploy.
+download was rate-limited on Cloud Run's shared IP. Fixed by one line in
+the `Dockerfile` that pre-downloads the model at *build* time (see doc 12).
+Already in the Dockerfile — no action needed.
 
 ---
 
 ## Phase 11 — Google OAuth gate
 
-```bash
-# Secret Manager holds the OAuth login secrets
-gcloud services enable secretmanager.googleapis.com --project=$PROJECT_ID
+Secret Manager was enabled in Phase 3.
+
+**Manual step (Console — no CLI):** search **"Google Auth Platform"** →
+configure the consent screen (Audience: **External**, status **Testing** —
+add each approved employee email under **Test users**). Then **Clients** →
+**Create client** → **Web application** → under **Authorized redirect URIs**
+add BOTH:
+
+```
+http://localhost:8501/oauth2callback
+https://<your-cloud-run-url>/oauth2callback
 ```
 
-**Manual step (no CLI):** in the Cloud Console, configure the OAuth consent
-screen (User Type: External, Publishing status: Testing — add each approved
-employee email under **Test users**), then create an **OAuth Client ID**
-(Web application) with redirect URI
-`https://<your-cloud-run-url>/oauth2callback`. Copy the Client ID and
-Client Secret.
+Copy the **Client ID** and **Client secret**.
+
+> **⚠️ The `/oauth2callback` path is mandatory and must match exactly.**
+> Streamlit's login handler only lives at `/oauth2callback`. If `redirect_uri`
+> is the bare URL, login silently loops. If the string in `secrets.toml`
+> differs from the Console by even one character (`http`/`https`, a trailing
+> slash, the port), Google returns `Error 400: redirect_uri_mismatch`.
+> Full explanation + fix: **[docs/17-troubleshooting.md](docs/17-troubleshooting.md)**.
 
 ```bash
-# Random signing key for the login cookie — never hand-type a secret
+# Random signing key for the login cookie
 COOKIE_SECRET=$(openssl rand -hex 32)
 
-# Write the OAuth config locally (temporary)
-cat > secrets.toml <<EOF
+# Write the OAuth config locally (gitignored path — never committed)
+mkdir -p .streamlit
+cat > .streamlit/secrets.toml <<EOF
 [auth]
 redirect_uri = "https://<your-cloud-run-url>/oauth2callback"
 cookie_secret = "$COOKIE_SECRET"
@@ -254,32 +316,29 @@ client_secret = "<your-oauth-client-secret>"
 server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
 EOF
 
-# Upload to Secret Manager — the only place these secrets live
-gcloud secrets create $SECRET_NAME --data-file=secrets.toml
-
-# Delete the local copy immediately
-rm secrets.toml
+# Upload the whole file as one secret
+gcloud secrets create $SECRET_NAME --data-file=.streamlit/secrets.toml --project=$PROJECT_ID
+# (later changes: gcloud secrets versions add $SECRET_NAME --data-file=.streamlit/secrets.toml --project=$PROJECT_ID)
 
 # Let the app read (only) this one secret
 gcloud secrets add-iam-policy-binding $SECRET_NAME \
-  --member="serviceAccount:$COMPUTE_SA" --role="roles/secretmanager.secretAccessor"
+  --member="serviceAccount:$COMPUTE_SA" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID
 
-# Redeploy: mount the secret, set the employee allow-list
+# Redeploy with the secret mounted (ALLOWED_EMPLOYEE_EMAILS is already in deploy.env.yaml)
 gcloud run deploy $CLOUD_RUN_SERVICE_APP \
   --source . \
-  --region $REGION \
+  --project=$PROJECT_ID \
+  --region=$REGION \
+  --allow-unauthenticated \
   --set-secrets=/app/.streamlit/secrets.toml=$SECRET_NAME:latest \
-  --update-env-vars ALLOWED_EMPLOYEE_EMAILS="employee1@example.com,employee2@example.com"
+  --env-vars-file=deploy.env.yaml
 ```
 
-To change the allow-list later — repeat the manual "Test user" step AND:
+Then open the Service URL in an **incognito window** and log in.
 
-```bash
-# The ^;^ prefix makes gcloud split on ; instead of , (emails contain , and @)
-gcloud run deploy $CLOUD_RUN_SERVICE_APP \
-  --source . --region $REGION \
-  --update-env-vars '^;^ALLOWED_EMPLOYEE_EMAILS=a@example.com,b@example.com,c@example.com'
-```
+To change the allow-list later: edit `ALLOWED_EMPLOYEE_EMAILS` in
+`deploy.env.yaml`, add/remove the email under Console → Test users, and
+re-run the deploy command above (both steps required — see doc 13).
 
 ---
 
@@ -366,7 +425,7 @@ gcloud services disable run.googleapis.com aiplatform.googleapis.com \
 gcloud projects delete $PROJECT_ID
 
 # 8. Local cleanup
-rm -rf genenv
+rm -rf hrrenv
 rm .env
 ```
 

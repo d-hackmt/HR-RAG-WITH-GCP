@@ -1,6 +1,7 @@
 # Secrets
 .env
 .env.example
+.streamlit/secrets.toml
 
 # VCS / tooling
 .git
@@ -25,3 +26,4 @@ docs/
 results/
 *.md
 langgraph.json
+deploy.env.yaml

@@ -11,14 +11,19 @@ hand-filled `.env`. **Docker** packages the app *and* everything it needs
 
 ```mermaid
 flowchart TD
-    A["Start from a small Python 3.12 image"] --> B["Install every library from requirements.txt"]
+    A["Start from a small Python 3.12 image"] --> A2["Copy the uv binary from its own image<br/>(ghcr.io/astral-sh/uv)"]
+    A2 --> B["uv pip install --system every library<br/>from requirements.txt"]
     B --> C["Pre-download the fastembed BM25 model<br/>(fixes a real bug — see below)"]
     C --> D["Copy in hr_assistant/, data/, and the entry scripts<br/>(app.py, ingest.py, evaluate.py, ...)"]
     D --> E["Start command: streamlit run app.py"]
 ```
 
-- `.dockerignore` keeps `.env`, `docs/`, and `results/` out of the image —
-  secrets never belong in an image.
+- Dependencies install with **`uv`** (fast), pulled straight from the
+  `ghcr.io/astral-sh/uv` image via `COPY --from` — no `pip`/`curl` step.
+  `--system` because a container needs no separate virtualenv.
+- `.dockerignore` keeps `.env`, `.streamlit/secrets.toml`, `deploy.env.yaml`,
+  `docs/`, and `results/` out of the image — secrets never belong in an
+  image.
 - `data/` **is** in the image, so `docker compose run ingest` can push the
   corpus to GCS from the container. The image also carries every entry
   script (`ingest.py`, `evaluate.py`, ...) so `docker compose run` works.
@@ -68,9 +73,11 @@ downloaded files between runs; a fresh-every-time environment didn't.
 ```bash
 gcloud run deploy hr-rag-assistant \
   --source . \
-  --region us-central1 \
+  --project=rag-hr-assistant-demo \
+  --region=us-central1 \
   --allow-unauthenticated \
-  --set-env-vars PROJECT_ID=...,GCS_BUCKET_NAME=...,QDRANT_URL=...,GUARDRAIL_PROVIDER=model_armor,...
+  --set-secrets=/app/.streamlit/secrets.toml=streamlit-auth:latest \
+  --env-vars-file=deploy.env.yaml
 ```
 
 - `--source .` — Cloud Build turns the Dockerfile into a running service
@@ -79,8 +86,17 @@ gcloud run deploy hr-rag-assistant \
   the security hole it looks like: the real gate is inside the app (Google
   login + employee allow-list), not at Cloud Run's network layer. Doc 13
   explains why.
-- `--set-env-vars` — non-secret config. The Qdrant and Jina API keys are
-  set here too and are visible only to people with access to the service's
-  own configuration, never committed to git.
+- `--env-vars-file=deploy.env.yaml` — non-secret config + the Qdrant / Jina
+  / Groq API keys, from a **gitignored** local YAML file. YAML (not a
+  `--set-env-vars` string) because `ALLOWED_EMPLOYEE_EMAILS` contains
+  commas. Visible only to people with access to the service config; never
+  committed.
+- `--set-secrets=…=streamlit-auth:latest` — mounts the OAuth `secrets.toml`
+  from Secret Manager into the container at `/app/.streamlit/secrets.toml`,
+  which is where Streamlit looks for it. This is what flips the app from
+  "open local mode" to enforcing the login gate.
+
+Full command list: **[commands.md](../commands.md)** Phases 10–11. Hitting
+`redirect_uri_mismatch` or a login loop? **[doc 17](17-troubleshooting.md)**.
 
 Next: **[doc 13 — Access Control](13-access-control.md)**.

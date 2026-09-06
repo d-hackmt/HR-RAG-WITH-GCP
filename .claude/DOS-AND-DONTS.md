@@ -19,7 +19,7 @@ Quick rules. Full context: the `hr-assistant-dev` skill and `docs/`.
 - Fail **CLOSED** on an input-guardrail error, **OPEN** on an
   output-guardrail error.
 - Match the existing docstring / comment style (explain WHY).
-- Update `docs/` + `summary.md` in the same pass as any behaviour change.
+- Update `docs/` in the same pass as any behaviour change.
 - Compile-check (`python -m compileall -q hr_assistant *.py`) after edits.
 - Load `verify-pipeline-change` before saying a change is done.
 

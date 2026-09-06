@@ -1,5 +1,7 @@
 # Secrets — live credentials, never commit
 .env
+.streamlit/secrets.toml
+deploy.env.yaml
 
 # Python bytecode / caches
 **/__pycache__/

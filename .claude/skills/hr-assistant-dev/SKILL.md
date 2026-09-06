@@ -16,8 +16,8 @@ A RAG agent answering company HR-policy questions from real policy
 documents, with citations. Deployed on Google Cloud Run behind Google OAuth;
 every model call is routed in-process by a LiteLLM Router (Gemini primary,
 Groq fallback — `hr_assistant/llm.py`, doc 14). Full explanation:
-`docs/01`-`docs/16`. Fast orientation: `summary.md`. This skill is the
-"before you touch the code" brief.
+`docs/01`-`docs/17` (17 = troubleshooting). Fast orientation: `README.md`.
+This skill is the "before you touch the code" brief.
 
 ## Non-negotiable rules
 

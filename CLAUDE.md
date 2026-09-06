@@ -3,7 +3,8 @@
 RAG agent answering company HR-policy questions from real policy documents,
 with citations. Deployed on Google Cloud Run behind Google OAuth; every
 model call is routed in-process by a LiteLLM Router (Gemini primary, Groq
-fallback). Full docs: `docs/01`–`docs/16`. Fast orientation: `summary.md`.
+fallback). Full docs: `docs/01`–`docs/17` (17 = troubleshooting). Fast
+orientation: `README.md`.
 
 ## Before you touch the code
 
