@@ -67,4 +67,4 @@ writer to Qdrant. Everything else connects to what it built.
 ## Documentation
 
 Read `docs/` in order — [01 Overview](docs/01-overview.md)–[08 The Agent](docs/08-the-agent.md)
-for this stage. [commands.md](commands.md) has every provisioning command.
+for this stage. [commands/commands.md](commands/commands.md) has every provisioning command.

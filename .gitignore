@@ -26,3 +26,16 @@ Thumbs.db
 # Local command references — real project values, not pushed
 commands-basic-rag.md
 commands-security.md
+commands-deployment.md
+
+deploy.env.yaml
+
+# Claude Code tooling — local only, not in the repo
+.claude/
+
+# Local, secret-bearing / machine-specific — never commit
+.streamlit/
+plan.csv
+commands/commands-basic-rag.md
+commands/commands-security.md
+commands/commands-deployment.md
